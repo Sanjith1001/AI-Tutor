@@ -1,9 +1,10 @@
 // Course Service
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AIService {
-  static const String apiKey = "YOUR_API_KEY_HERE"; // replace with Groq/OpenAI key
+  static String get apiKey => dotenv.env['GROQ_API_KEY'] ?? '';
   static const String endpoint = "https://api.openai.com/v1/chat/completions";
 
   static Future<Map<String, dynamic>> generateCourseContent(String topic) async {

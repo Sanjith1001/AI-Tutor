@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/course_model.dart';
 
 class ModuleDetailScreen extends StatefulWidget {
@@ -240,7 +241,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen>
         headers: {
           "Content-Type": "application/json",
           "Authorization":
-              "YOUR_API_KEY_HERE", // ✅ Use real API key
+              "Bearer ${dotenv.env['GROQ_API_KEY']}", // ✅ Use real API key from env
         },
         body: jsonEncode({
           "model": "llama3-70b-8192",

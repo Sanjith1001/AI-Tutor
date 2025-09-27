@@ -2,9 +2,10 @@
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class GroqService {
-  final String apiKey = "YOUR_API_KEY_HERE";  // replace this with your actual key
+  final String apiKey = dotenv.env['GROQ_API_KEY'] ?? '';
   final String endpoint = "https://api.groq.com/openai/v1/chat/completions";
 
   Future<Map<String, dynamic>> generateCourse(String topic) async {

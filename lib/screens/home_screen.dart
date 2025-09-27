@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'login_screen.dart';
 import 'ai_content_generator_screen.dart';
 import 'quiz_screen.dart';
+import 'vark_quiz_screen.dart';
+import 'admin_screen.dart';
 import '../services/activity_service.dart';
 import '../services/auth_backend_service.dart';
 
@@ -15,7 +17,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
-  // Pages for bottom nav
   final List<Widget> _pages = [
     const CoursesPage(),
     const DashboardPage(),
@@ -31,8 +32,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        title: const Text("ByteBrain"),
+        title: const Text("ByteBrain", style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue.shade800,
         actions: [
           PopupMenuButton<String>(
@@ -43,6 +45,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 Navigator.of(context).pushReplacement(
                   MaterialPageRoute(
                     builder: (context) => const ByteBrainLoginScreen(),
+                  ),
+                );
+              } else if (value == 'admin') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AdminScreen(),
                   ),
                 );
               }
@@ -60,6 +69,16 @@ class _HomeScreenState extends State<HomeScreen> {
                         return Text(snapshot.data?['name'] ?? 'Profile');
                       },
                     ),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'admin',
+                child: Row(
+                  children: [
+                    Icon(Icons.admin_panel_settings, color: Colors.orange),
+                    SizedBox(width: 8),
+                    Text('Admin Dashboard', style: TextStyle(color: Colors.orange)),
                   ],
                 ),
               ),
@@ -97,11 +116,72 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         type: BottomNavigationBarType.fixed,
       ),
+      floatingActionButton: _selectedIndex == 0 ? FloatingActionButton(
+        onPressed: () async {
+          final learningStyle = await ActivityService.getLearningStyle();
+          if (learningStyle == null) {
+            _showVARKRequiredDialog();
+          } else {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const AIContentGeneratorScreen(),
+              ),
+            );
+          }
+        },
+        backgroundColor: Colors.blue.shade600,
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.add),
+      ) : null,
+    );
+  }
+
+  void _showVARKRequiredDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            const Icon(Icons.psychology, color: Colors.blue),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Learning Style Assessment Required',
+                style: const TextStyle(fontSize: 16),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'To provide you with personalized courses based on your learning style, please complete the VARK Learning Style Assessment first.\n\nThis will help us show you the most suitable courses for your learning preferences.',
+        ),
+        actions: [
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const VARKQuizScreen(),
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blue.shade600,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Take Assessment'),
+          ),
+        ],
+      ),
     );
   }
 }
 
-// Courses Page with AI Content Generator
 class CoursesPage extends StatefulWidget {
   const CoursesPage({super.key});
 
@@ -110,111 +190,232 @@ class CoursesPage extends StatefulWidget {
 }
 
 class _CoursesPageState extends State<CoursesPage> {
+  bool _hasCompletedVARK = false;
+
   @override
   void initState() {
     super.initState();
+    _checkVARKCompletion();
   }
 
-
+  Future<void> _checkVARKCompletion() async {
+    final learningStyle = await ActivityService.getLearningStyle();
+    setState(() {
+      _hasCompletedVARK = learningStyle != null;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            const Text(
-              'Welcome to ByteBrain',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Create personalized learning experiences with AI',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            const SizedBox(height: 32),
-
-          
-          const SizedBox(height: 32),
-          
-          // Quick Actions Section
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           const Text(
-            'Quick Actions',
+            'Welcome to ByteBrain',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 28,
               fontWeight: FontWeight.bold,
               color: Colors.black87,
             ),
           ),
-          const SizedBox(height: 16),
-          
-          Row(
-            children: [
-              Expanded(
-                child: _QuickActionCard(
-                  icon: Icons.school,
-                  title: 'Browse Courses',
-                  subtitle: 'Explore existing courses',
-                  onTap: () {
-                    // Navigate to courses list
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _QuickActionCard(
-                  icon: Icons.quiz,
-                  title: 'Take Quiz',
-                  subtitle: 'Test your knowledge',
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const QuizScreen(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const AIContentGeneratorScreen(),
+          const SizedBox(height: 8),
+          Text(
+            'Create personalized learning experiences with AI',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.grey.shade600,
             ),
-          );
-        },
-        backgroundColor: Colors.blue.shade600,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
+          ),
+          const SizedBox(height: 32),
+          
+          if (!_hasCompletedVARK)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.blue.shade600, Colors.blue.shade400],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blue.withValues(alpha: 0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.psychology,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Learning Style Assessment',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Complete the VARK assessment to unlock personalized courses tailored to your learning style.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white.withValues(alpha: 0.9),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const VARKQuizScreen(),
+                        ),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.blue.shade600,
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.rocket_launch),
+                        SizedBox(width: 8),
+                        Text(
+                          'Start Assessment',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.green.shade50,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.green.shade200),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green.shade600, size: 24),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Learning Style Assessment Complete',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green.shade800,
+                          ),
+                        ),
+                        FutureBuilder<String?>(
+                          future: ActivityService.getLearningStyle(),
+                          builder: (context, snapshot) {
+                            return Text(
+                              'Your learning style: ${snapshot.data ?? 'Loading...'}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.green.shade700,
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        
+        const SizedBox(height: 32),
+        
+        const Text(
+          'Quick Actions',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 16),
+        
+        Row(
+          children: [
+            Expanded(
+              child: QuickActionCard(
+                icon: Icons.school,
+                title: 'Browse Courses',
+                subtitle: 'Explore existing courses',
+                onTap: () {},
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: QuickActionCard(
+                icon: Icons.quiz,
+                title: 'Take Quiz',
+                subtitle: 'Test your knowledge',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const QuizScreen(),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ],
       ),
     );
   }
 }
 
-class _QuickActionCard extends StatelessWidget {
+class QuickActionCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
 
-  const _QuickActionCard({
+  const QuickActionCard({
+    super.key,
     required this.icon,
     required this.title,
     required this.subtitle,
@@ -265,8 +466,6 @@ class _QuickActionCard extends StatelessWidget {
   }
 }
 
-
-// Dashboard Page
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
@@ -314,9 +513,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return RefreshIndicator(
@@ -326,7 +523,6 @@ class _DashboardPageState extends State<DashboardPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             const Text(
               'Dashboard',
               style: TextStyle(
@@ -345,7 +541,6 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             const SizedBox(height: 32),
             
-            // Stats Cards
             Row(
               children: [
                 Expanded(
@@ -438,53 +633,33 @@ class _DashboardPageState extends State<DashboardPage> {
             
             const SizedBox(height: 16),
             
-            Row(
-              children: [
-                Expanded(
-                  child: Card(
-                    elevation: 4,
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          Icon(Icons.trending_up, size: 32, color: Colors.orange.shade600),
-                          const SizedBox(height: 8),
-                          Text(
-                            '${_averageScore.toInt()}%',
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                          ),
-                          const Text('Average Score'),
-                        ],
-                      ),
+            Card(
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Icon(Icons.trending_up, size: 32, color: Colors.orange.shade600),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${_averageScore.toInt()}%',
+                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),
-                  ),
+                    const Text('Average Score'),
+                  ],
                 ),
-              ],
+              ),
             ),
             
             const SizedBox(height: 32),
             
-            // Recent Activity
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Recent Activity',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                  ),
-                ),
-                if (_recentActivities.isNotEmpty)
-                  TextButton(
-                    onPressed: () {
-                      // Show all activities dialog or navigate to activities page
-                      _showAllActivities();
-                    },
-                    child: const Text('View All'),
-                  ),
-              ],
+            const Text(
+              'Recent Activity',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
             ),
             const SizedBox(height: 16),
             
@@ -562,218 +737,201 @@ class _DashboardPageState extends State<DashboardPage> {
       ),
     );
   }
-
-  void _showAllActivities() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('All Activities'),
-        content: SizedBox(
-          width: double.maxFinite,
-          height: 400,
-          child: FutureBuilder<List<Map<String, dynamic>>>(
-            future: ActivityService.getRecentActivities(limit: 50),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
-              }
-              
-              if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                return const Center(child: Text('No activities found'));
-              }
-              
-              return ListView.builder(
-                itemCount: snapshot.data!.length,
-                itemBuilder: (context, index) {
-                  final activity = snapshot.data![index];
-                  return ListTile(
-                    leading: Icon(
-                      ActivityService.getActivityIcon(activity['type']),
-                      color: ActivityService.getActivityColor(activity['type']),
-                    ),
-                    title: Text(activity['title']),
-                    subtitle: Text(
-                      '${activity['description']} • ${ActivityService.formatTimestamp(activity['timestamp'])}',
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
-// Profile Page from user
-class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
-
-  @override
-  State<ProfilePage> createState() => _ProfilePageState();
-}
-
-class _ProfilePageState extends State<ProfilePage> {
-  // Example user data; replace with your actual model or from API
-  String name = "John Doe";
-  String email = "john.doe@example.com";
-  String bio = "Passionate about learning new things every day.";
-  String profileImageUrl = "https://via.placeholder.com/150";
+class ProfilePage extends StatelessWidget {
+  const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 16.0),
-        child: Column(
-          children: [
-            // Profile picture + edit icon
-            Stack(
-              alignment: Alignment.bottomRight,
-              children: [
-                CircleAvatar(
-                  radius: 60,
-                  backgroundImage: NetworkImage(profileImageUrl),
-                ),
-                Positioned(
-                  child: GestureDetector(
-                    onTap: () {
-                      // handle change profile pic
-                    },
-                    child: CircleAvatar(
-                      radius: 20,
-                      backgroundColor: Theme.of(context).primaryColor,
-                      child: const Icon(
-                        Icons.edit,
-                        color: Colors.white,
-                        size: 20,
-                      ),
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Profile',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 32),
+          
+          Card(
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  const CircleAvatar(
+                    radius: 40,
+                    backgroundColor: Colors.blue,
+                    child: Icon(
+                      Icons.person,
+                      size: 40,
+                      color: Colors.white,
                     ),
                   ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 20),
-
-            // User name
-            Text(
-              name,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
+                  const SizedBox(height: 16),
+                  FutureBuilder<Map<String, dynamic>?>(
+                    future: AuthBackendService.getCurrentUser(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const CircularProgressIndicator();
+                      }
+                      
+                      final user = snapshot.data;
+                      return Column(
+                        children: [
+                          Text(
+                            user?['name'] ?? 'Unknown User',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            user?['email'] ?? 'No email',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
-
-            const SizedBox(height: 8),
-
-            // Email
-            Text(
-              email,
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
+          ),
+          
+          const SizedBox(height: 24),
+          
+          Card(
+            elevation: 4,
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Learning Preferences',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FutureBuilder<String?>(
+                    future: ActivityService.getLearningStyle(),
+                    builder: (context, snapshot) {
+                      return Row(
+                        children: [
+                          const Icon(Icons.psychology, color: Colors.purple),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Learning Style',
+                                style: TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                              Text(
+                                snapshot.data ?? 'Not assessed',
+                                style: TextStyle(color: Colors.grey.shade600),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  FutureBuilder<String?>(
+                    future: ActivityService.getSkillLevel(),
+                    builder: (context, snapshot) {
+                      return Row(
+                        children: [
+                          const Icon(Icons.school, color: Colors.teal),
+                          const SizedBox(width: 12),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Skill Level',
+                                style: TextStyle(fontWeight: FontWeight.w500),
+                              ),
+                              Text(
+                                snapshot.data ?? 'Not assessed',
+                                style: TextStyle(color: Colors.grey.shade600),
+                              ),
+                            ],
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            // Bio or about
-            if (bio.isNotEmpty)
-              Text(
-                bio,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16),
-              ),
-
-            const SizedBox(height: 30),
-
-            // Profile settings / options
-            ProfileOption(
-              icon: Icons.lock,
-              title: "Change Password",
-              onTap: () {
-                // Navigate to change password screen
-              },
-            ),
-            ProfileOption(
-              icon: Icons.language,
-              title: "Language & Region",
-              onTap: () {
-                // Navigate to language settings
-              },
-            ),
-            ProfileOption(
-              icon: Icons.notifications,
-              title: "Notification Settings",
-              onTap: () {
-                // Navigate to notifications settings
-              },
-            ),
-            ProfileOption(
-              icon: Icons.help_center,
-              title: "Help & Support",
-              onTap: () {
-                // Navigate to support / faq
-              },
-            ),
-
-            const SizedBox(height: 40),
-
-            // Logout button
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red, // logout in red
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-              ),
-              onPressed: () {
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(
-                      builder: (_) => const ByteBrainLoginScreen()),
-                  (route) => false,
+          ),
+          
+          const SizedBox(height: 24),
+          
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Logout'),
+                    content: const Text('Are you sure you want to logout?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                        ),
+                        child: const Text('Logout', style: TextStyle(color: Colors.white)),
+                      ),
+                    ],
+                  ),
                 );
+                
+                if (confirmed == true) {
+                  await AuthBackendService.logoutUser();
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => const ByteBrainLoginScreen(),
+                    ),
+                  );
+                }
               },
-              child: const Text(
-                "Log Out",
-                style: TextStyle(fontSize: 16),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.logout),
+                  SizedBox(width: 8),
+                  Text('Logout'),
+                ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ProfileOption extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final VoidCallback onTap;
-
-  const ProfileOption({
-    Key? key,
-    required this.icon,
-    required this.title,
-    required this.onTap,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      child: ListTile(
-        leading: Icon(icon, color: Theme.of(context).primaryColor),
-        title: Text(title),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-        onTap: onTap,
+          ),
+        ],
       ),
     );
   }

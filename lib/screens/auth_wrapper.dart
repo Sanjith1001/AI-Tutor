@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_backend_service.dart';
 import 'login_screen.dart';
 import 'home_screen.dart';
+import 'admin_dashboard_screen.dart';
 
 class AuthWrapper extends StatefulWidget {
   const AuthWrapper({super.key});
@@ -13,6 +14,7 @@ class AuthWrapper extends StatefulWidget {
 class _AuthWrapperState extends State<AuthWrapper> {
   bool _isLoading = true;
   bool _isLoggedIn = false;
+  bool _isAdmin = false;
 
   @override
   void initState() {
@@ -23,13 +25,16 @@ class _AuthWrapperState extends State<AuthWrapper> {
   Future<void> _checkAuthStatus() async {
     try {
       final isLoggedIn = await AuthBackendService.isLoggedIn();
+      final isAdmin = await AuthBackendService.isAdmin();
       setState(() {
         _isLoggedIn = isLoggedIn;
+        _isAdmin = isAdmin;
         _isLoading = false;
       });
     } catch (e) {
       setState(() {
         _isLoggedIn = false;
+        _isAdmin = false;
         _isLoading = false;
       });
     }
@@ -58,6 +63,10 @@ class _AuthWrapperState extends State<AuthWrapper> {
       );
     }
 
-    return _isLoggedIn ? const HomeScreen() : const ByteBrainLoginScreen();
+    if (!_isLoggedIn) {
+      return const ByteBrainLoginScreen();
+    }
+    
+    return _isAdmin ? const AdminDashboardScreen() : const HomeScreen();
   }
 }

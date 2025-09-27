@@ -121,11 +121,18 @@ class _VARKQuizScreenState extends State<VARKQuizScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.warning, color: Colors.orange),
-            SizedBox(width: 8),
-            Text('Skip Quiz (Testing)'),
+            const Icon(Icons.warning, color: Colors.orange),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Skip Quiz (Testing)',
+                style: const TextStyle(fontSize: 16),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         content: const Text(
@@ -334,11 +341,12 @@ class _VARKQuizScreenState extends State<VARKQuizScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Progress indicator
             Container(
               width: double.infinity,
@@ -400,14 +408,11 @@ class _VARKQuizScreenState extends State<VARKQuizScreen> {
             const SizedBox(height: 24),
             
             // Options
-            Expanded(
-              child: ListView.builder(
-                itemCount: questions[currentQuestionIndex].options.length,
-                itemBuilder: (context, index) {
-                  final option = questions[currentQuestionIndex].options.keys.elementAt(index);
-                  final isSelected = selectedAnswer == option;
-                  
-                  return Container(
+            Column(
+              children: questions[currentQuestionIndex].options.keys.map((option) {
+                final isSelected = selectedAnswer == option;
+                
+                return Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     child: InkWell(
                       onTap: () => _selectAnswer(option, questions[currentQuestionIndex].options[option]!),
@@ -466,9 +471,10 @@ class _VARKQuizScreenState extends State<VARKQuizScreen> {
                       ),
                     ),
                   );
-                },
-              ),
+              }).toList(),
             ),
+            
+            const SizedBox(height: 32),
             
             // Next button
             SizedBox(
@@ -496,8 +502,9 @@ class _VARKQuizScreenState extends State<VARKQuizScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildResultScreen() {
     return Scaffold(

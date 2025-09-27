@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'register_screen.dart';
+import 'admin_dashboard_screen.dart';
 import '../services/auth_backend_service.dart';
 
 class ByteBrainLoginScreen extends StatefulWidget {
@@ -48,10 +49,16 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
           ),
         );
 
-        // Navigate to home screen
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
-        );
+        // Navigate based on user type
+        if (result['isAdmin'] == true) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const AdminDashboardScreen()),
+          );
+        } else {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (_) => const HomeScreen()),
+          );
+        }
       } else {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(

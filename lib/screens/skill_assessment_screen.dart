@@ -202,11 +202,12 @@ class _SkillAssessmentScreenState extends State<SkillAssessmentScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             // Progress indicator
             Container(
               width: double.infinity,
@@ -405,8 +406,9 @@ class _SkillAssessmentScreenState extends State<SkillAssessmentScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildResultScreen() {
     final percentage = (score / questions.length * 100).round();

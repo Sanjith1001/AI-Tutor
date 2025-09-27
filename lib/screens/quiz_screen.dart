@@ -159,11 +159,12 @@ class _QuizScreenState extends State<QuizScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
@@ -231,9 +232,9 @@ class _QuizScreenState extends State<QuizScreen> {
               child: GridView.builder(
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
-                  childAspectRatio: 1.2,
-                  crossAxisSpacing: 16,
-                  mainAxisSpacing: 16,
+                  childAspectRatio: 1.0,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
                 ),
                 itemCount: availableSubjects.length,
                 itemBuilder: (context, index) {
@@ -243,15 +244,15 @@ class _QuizScreenState extends State<QuizScreen> {
                     onTap: () => _selectSubject(subject),
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.grey.shade300),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
-                            blurRadius: 8,
+                            color: Colors.grey.withValues(alpha: 0.1),
+                            blurRadius: 6,
                             offset: const Offset(0, 2),
                           ),
                         ],
@@ -260,28 +261,30 @@ class _QuizScreenState extends State<QuizScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
                               color: Colors.blue.shade50,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(8),
                             ),
                             child: Icon(
                               _getSubjectIcon(subject),
                               color: Colors.blue.shade600,
-                              size: 24,
+                              size: 20,
                             ),
                           ),
-                          const SizedBox(height: 12),
-                          Text(
-                            subject,
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                          const SizedBox(height: 8),
+                          Expanded(
+                            child: Text(
+                              subject,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                              textAlign: TextAlign.center,
+                              maxLines: 3,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            textAlign: TextAlign.center,
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
@@ -293,8 +296,9 @@ class _QuizScreenState extends State<QuizScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildQuizScreen() {
     final currentQuestion = questions[currentQuestionIndex];

@@ -16,11 +16,12 @@ class GroqService {
         "Authorization": "Bearer $apiKey",
       },
       body: jsonEncode({
-        "model": "llama-3.3-70b-versatile",  // changed model to a supported one
+        "model": "llama-3.3-70b-versatile", // changed model to a supported one
         "messages": [
           {
             "role": "system",
-            "content": "You are an expert educational content creator and AI tutor that generates comprehensive, structured course outlines. You create engaging, practical, and well-organized learning materials."
+            "content":
+                "You are an expert educational content creator and AI tutor that generates comprehensive, structured course outlines. You create engaging, practical, and well-organized learning materials."
           },
           {
             "role": "user",
@@ -63,31 +64,33 @@ Generate the course now:
       try {
         // Clean the content to extract JSON
         String cleanContent = content.trim();
-        
+
         // Find JSON start and end
         int jsonStart = cleanContent.indexOf('{');
         int jsonEnd = cleanContent.lastIndexOf('}') + 1;
-        
+
         if (jsonStart != -1 && jsonEnd > jsonStart) {
           cleanContent = cleanContent.substring(jsonStart, jsonEnd);
         }
-        
+
         return jsonDecode(cleanContent);
       } catch (e) {
         throw Exception("Invalid JSON format from Groq. Raw content: $content");
       }
     } else {
-      throw Exception("Failed to fetch from Groq: ${response.statusCode} - ${response.body}");
+      throw Exception(
+          "Failed to fetch from Groq: ${response.statusCode} - ${response.body}");
     }
   }
 
-  Future<Map<String, dynamic>> generateDetailedContent(String prompt, {String? difficulty, String? audience}) async {
+  Future<Map<String, dynamic>> generateDetailedContent(String prompt,
+      {String? difficulty, String? audience}) async {
     String enhancedPrompt = prompt;
-    
+
     if (difficulty != null) {
       enhancedPrompt += "\n\nDifficulty Level: $difficulty";
     }
-    
+
     if (audience != null) {
       enhancedPrompt += "\nTarget Audience: $audience";
     }
@@ -103,7 +106,8 @@ Generate the course now:
         "messages": [
           {
             "role": "system",
-            "content": "You are an expert educational content creator specializing in creating comprehensive, engaging learning materials. You understand different learning styles and can adapt content for various audiences and skill levels."
+            "content":
+                "You are an expert educational content creator specializing in creating comprehensive, engaging learning materials. You understand different learning styles and can adapt content for various audiences and skill levels."
           },
           {
             "role": "user",
@@ -143,28 +147,30 @@ Return ONLY valid JSON in this format:
       try {
         // Clean the content to extract JSON
         String cleanContent = content.trim();
-        
+
         // Find JSON start and end
         int jsonStart = cleanContent.indexOf('{');
         int jsonEnd = cleanContent.lastIndexOf('}') + 1;
-        
+
         if (jsonStart != -1 && jsonEnd > jsonStart) {
           cleanContent = cleanContent.substring(jsonStart, jsonEnd);
         }
-        
+
         return jsonDecode(cleanContent);
       } catch (e) {
         throw Exception("Invalid JSON format from Groq. Raw content: $content");
       }
     } else {
-      throw Exception("Failed to fetch from Groq: ${response.statusCode} - ${response.body}");
+      throw Exception(
+          "Failed to fetch from Groq: ${response.statusCode} - ${response.body}");
     }
   }
 
   Future<String> generateTextContent(String prompt) async {
     print('🔵 GroqService: Making API call...');
-    print('🔵 Prompt: ${prompt.substring(0, prompt.length > 100 ? 100 : prompt.length)}...');
-    
+    print(
+        '🔵 Prompt: ${prompt.substring(0, prompt.length > 100 ? 100 : prompt.length)}...');
+
     final response = await http.post(
       Uri.parse(endpoint),
       headers: {
@@ -176,12 +182,10 @@ Return ONLY valid JSON in this format:
         "messages": [
           {
             "role": "system",
-            "content": "You are an expert educational content creator. Provide clear, comprehensive, and engaging educational content."
+            "content":
+                "You are an expert educational content creator. Provide clear, comprehensive, and engaging educational content."
           },
-          {
-            "role": "user",
-            "content": prompt
-          }
+          {"role": "user", "content": prompt}
         ],
         "temperature": 0.7,
         "max_tokens": 2000,
@@ -189,15 +193,17 @@ Return ONLY valid JSON in this format:
     );
 
     print('🔵 Response status: ${response.statusCode}');
-    
+
     if (response.statusCode == 200) {
       final decoded = jsonDecode(response.body);
       final content = decoded["choices"][0]["message"]["content"];
-      print('🔵 Content generated successfully: ${content?.substring(0, content.length > 100 ? 100 : content.length)}...');
+      print(
+          '🔵 Content generated successfully: ${content?.substring(0, content.length > 100 ? 100 : content.length)}...');
       return content?.trim() ?? "No content generated.";
     } else {
       print('🔴 API Error: ${response.statusCode} - ${response.body}');
-      throw Exception("Failed to fetch from Groq: ${response.statusCode} - ${response.body}");
+      throw Exception(
+          "Failed to fetch from Groq: ${response.statusCode} - ${response.body}");
     }
   }
 }

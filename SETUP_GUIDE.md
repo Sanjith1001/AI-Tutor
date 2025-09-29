@@ -47,13 +47,26 @@ flutter pub get
 flutter run -d chrome  # or -d windows, -d android
 ```
 
-## 🔑 Getting Your Groq API Key
+## 🔑 Getting Your API Keys
 
+### Groq API Key (AI Features)
 1. **Visit**: https://console.groq.com/keys
 2. **Sign up/Login** to your account
 3. **Create** a new API key
 4. **Copy** the key (starts with `gsk_`)
-5. **Paste** into your `.env` file
+
+### YouTube API Key (Video Features)
+1. **Visit**: https://console.developers.google.com/
+2. **Create** a new project or select existing
+3. **Enable** YouTube Data API v3
+4. **Create credentials** (API Key)
+5. **Copy** the API key
+
+### Update .env file
+```env
+GROQ_API_KEY=gsk_your_groq_key_here
+YOUTUBE_API_KEY=your_youtube_key_here
+```
 
 ## 🎮 Running the App
 

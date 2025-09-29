@@ -341,7 +341,7 @@ class _PersonalizedCourseScreenState extends State<PersonalizedCourseScreen> {
                         showSimplified = value;
                       });
                     },
-                    activeColor: widget.selectedCourse['color'],
+                    activeThumbColor: widget.selectedCourse['color'],
                   ),
                 ],
               ),

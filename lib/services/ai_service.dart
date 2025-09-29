@@ -7,7 +7,8 @@ class AIService {
   static String get apiKey => dotenv.env['GROQ_API_KEY'] ?? '';
   static const String endpoint = "https://api.openai.com/v1/chat/completions";
 
-  static Future<Map<String, dynamic>> generateCourseContent(String topic) async {
+  static Future<Map<String, dynamic>> generateCourseContent(
+      String topic) async {
     final response = await http.post(
       Uri.parse(endpoint),
       headers: {
@@ -19,14 +20,15 @@ class AIService {
         "messages": [
           {
             "role": "system",
-            "content": "You are an expert course creator. Generate structured JSON."
+            "content":
+                "You are an expert course creator. Generate structured JSON."
           },
           {
             "role": "user",
             "content":
                 "Generate 10 course modules for the topic '$topic'. Each module should have 2 lessons. "
-                "Return JSON strictly in this format:\n"
-                "{ \"modules\": [ {\"title\": \"...\", \"lessons\": [ {\"title\": \"...\", \"content\": \"...\"} ] } ] }"
+                    "Return JSON strictly in this format:\n"
+                    "{ \"modules\": [ {\"title\": \"...\", \"lessons\": [ {\"title\": \"...\", \"content\": \"...\"} ] } ] }"
           }
         ],
         "temperature": 0.7

@@ -41,16 +41,26 @@ cd AI-Tutor
    cp .env.example .env
    ```
 
-2. **Get your Groq API Key:**
+2. **Get your API Keys:**
+   
+   **Groq API Key (Required for AI features):**
    - Visit [Groq Console](https://console.groq.com/keys)
    - Sign up/Login to your account
    - Create a new API key
    - Copy the API key
 
+   **YouTube API Key (Required for video features):**
+   - Visit [Google Cloud Console](https://console.developers.google.com/)
+   - Create a new project or select existing project
+   - Enable YouTube Data API v3
+   - Create credentials (API Key)
+   - Copy the API key
+
 3. **Update the .env file:**
-   Open `.env` file and replace `your_groq_api_key_here` with your actual API key:
+   Open `.env` file and add your actual API keys:
    ```env
-   GROQ_API_KEY=gsk_your_actual_api_key_here
+   GROQ_API_KEY=gsk_your_actual_groq_api_key_here
+   YOUTUBE_API_KEY=your_youtube_api_key_here
    ```
 
 ### Step 3: Install Dependencies

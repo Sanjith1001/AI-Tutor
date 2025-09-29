@@ -75,7 +75,7 @@ Make questions practical and test real understanding, not just memorization.
       } else if (line.startsWith('Correct:')) {
         correctAnswer = line.substring(8).trim();
         
-        if (currentQuestion != null && currentQuestion.isNotEmpty && options.length == 4 && correctAnswer != null && correctAnswer.isNotEmpty) {
+        if (currentQuestion != null && currentQuestion.isNotEmpty && options.length == 4 && correctAnswer.isNotEmpty) {
           int correctIndex = ['A', 'B', 'C', 'D'].indexOf(correctAnswer);
           if (correctIndex != -1) {
             parsedQuestions.add({

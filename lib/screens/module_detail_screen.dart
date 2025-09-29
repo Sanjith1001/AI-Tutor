@@ -95,7 +95,8 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen>
               children: [
                 Row(
                   children: [
-                    Icon(Icons.psychology, color: Colors.blue.shade300, size: 20),
+                    Icon(Icons.psychology,
+                        color: Colors.blue.shade300, size: 20),
                     const SizedBox(width: 8),
                     Text(
                       '${widget.learningStyle} Learning Style',
@@ -118,7 +119,7 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen>
               ],
             ),
           ),
-        
+
         // Content
         Expanded(
           child: ListView.builder(
@@ -126,11 +127,13 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen>
             itemCount: widget.module.lessons.length,
             itemBuilder: (context, index) {
               final lesson = widget.module.lessons[index];
-              String prompt = promptTemplate.replaceAll("{title}", lesson.title);
-              
+              String prompt =
+                  promptTemplate.replaceAll("{title}", lesson.title);
+
               // Enhance prompt with learning style if available
               if (widget.learningStyle != null) {
-                prompt += _getLearningStylePromptAddition(widget.learningStyle!);
+                prompt +=
+                    _getLearningStylePromptAddition(widget.learningStyle!);
               }
 
               final future =
@@ -166,7 +169,8 @@ class _ModuleDetailScreenState extends State<ModuleDetailScreen>
                         padding: const EdgeInsets.all(12.0),
                         child: SelectableText(
                           snapshot.data ?? "⚠️ No AI response generated.",
-                          style: const TextStyle(color: Colors.white70, height: 1.4),
+                          style: const TextStyle(
+                              color: Colors.white70, height: 1.4),
                         ),
                       ),
                     ],

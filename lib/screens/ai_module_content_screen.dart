@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/groq_service.dart';
 import '../services/activity_service.dart';
+import '../services/youtube_service.dart';
+import '../widgets/youtube_video_widget.dart';
 import 'course_completion_quiz_screen.dart';
+import 'youtube_search_screen.dart';
 
 class AIModuleContentScreen extends StatefulWidget {
   final String moduleTitle;
@@ -6867,105 +6870,377 @@ System.out.println("Removed: " + front);  // Output: First
   }
 
   Widget _buildVideosTab() {
-    return FutureBuilder<String>(
-      future:
-          _contentCache.putIfAbsent('videos', () => _generateContent('videos')),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
+    return _YouTubeVideosWidget(
+      moduleTitle: widget.moduleTitle,
+      searchQuery: widget.moduleTitle,
+    );
+  }
+}
+
+class _YouTubeVideosWidget extends StatefulWidget {
+  final String moduleTitle;
+  final String searchQuery;
+
+  const _YouTubeVideosWidget({
+    required this.moduleTitle,
+    required this.searchQuery,
+  });
+
+  @override
+  State<_YouTubeVideosWidget> createState() => _YouTubeVideosWidgetState();
+}
+
+class _YouTubeVideosWidgetState extends State<_YouTubeVideosWidget> {
+  List<YouTubeVideo> _videos = [];
+  bool _isLoading = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVideos();
+  }
+
+  Future<void> _loadVideos() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final videos = await YouTubeService.searchVideos(
+        query: widget.searchQuery,
+        maxResults: 6,
+      );
+      if (mounted) {
+        setState(() {
+          _videos = videos;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header section
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.red.shade900, Colors.red.shade700],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                CircularProgressIndicator(color: Colors.blue),
-                SizedBox(height: 16),
+                Row(
+                  children: [
+                    Icon(Icons.play_circle_fill, color: Colors.white, size: 28),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Video Learning: ${widget.moduleTitle}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
                 Text(
-                  'Finding video recommendations...',
-                  style: TextStyle(color: Colors.white70),
+                  'Watch curated YouTube videos to enhance your understanding of ${widget.moduleTitle}',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 16,
+                  ),
                 ),
               ],
             ),
-          );
-        }
+          ),
 
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 20),
+
+          // Action buttons
+          Row(
             children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.red.shade900,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.play_circle_fill,
-                            color: Colors.red.shade300, size: 24),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Video Recommendations',
-                          style: TextStyle(
-                            color: Colors.red.shade300,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => YouTubeSearchScreen(
+                          initialQuery: widget.searchQuery,
+                          moduleTitle: widget.moduleTitle,
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Search YouTube for: "${widget.moduleTitle}"',
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 16,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    if (snapshot.hasData)
-                      SelectableText(
-                        snapshot.data!,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          height: 1.6,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              Card(
-                color: Colors.grey.shade800,
-                child: ListTile(
-                  leading:
-                      Icon(Icons.video_library, color: Colors.red.shade400),
-                  title: const Text(
-                    'Open YouTube Search',
-                    style: TextStyle(color: Colors.white),
-                  ),
-                  subtitle: Text(
-                    'Search for "${widget.moduleTitle}" videos',
-                    style: const TextStyle(color: Colors.white70),
-                  ),
-                  trailing:
-                      const Icon(Icons.open_in_new, color: Colors.white70),
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('YouTube integration coming soon!'),
                       ),
                     );
                   },
+                  icon: const Icon(Icons.search),
+                  label: const Text('Search More Videos'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue[700],
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: _loadVideos,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Refresh'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green[700],
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
                 ),
               ),
             ],
           ),
-        );
-      },
+
+          const SizedBox(height: 20),
+
+          // Content section
+          if (_isLoading)
+            _buildLoadingWidget()
+          else if (_error != null)
+            _buildErrorWidget()
+          else if (_videos.isEmpty)
+            _buildEmptyWidget()
+          else
+            _buildVideosGrid(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLoadingWidget() {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(40),
+        child: const Column(
+          children: [
+            CircularProgressIndicator(color: Colors.red),
+            SizedBox(height: 16),
+            Text(
+              'Loading YouTube videos...',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.red.shade100,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.red.shade300),
+        ),
+        child: Column(
+          children: [
+            Icon(Icons.error_outline, size: 48, color: Colors.red[700]),
+            const SizedBox(height: 12),
+            Text(
+              'Failed to load YouTube videos',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.red[700],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _error!.contains('API key')
+                  ? 'YouTube API key not configured. Please check your .env file.'
+                  : _error!,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.red[600]),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextButton(
+                  onPressed: _loadVideos,
+                  child: const Text('Retry'),
+                ),
+                const SizedBox(width: 12),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => YouTubeSearchScreen(
+                          initialQuery: widget.searchQuery,
+                          moduleTitle: widget.moduleTitle,
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('Search Manually'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyWidget() {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Icon(Icons.video_library_outlined,
+                size: 64, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              'No videos found',
+              style: TextStyle(
+                fontSize: 18,
+                color: Colors.grey[600],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Try searching with different keywords',
+              style: TextStyle(color: Colors.grey[500]),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => YouTubeSearchScreen(
+                      initialQuery: widget.searchQuery,
+                      moduleTitle: widget.moduleTitle,
+                    ),
+                  ),
+                );
+              },
+              child: const Text('Search Videos'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildVideosGrid() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Recommended Videos (${_videos.length})',
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 16),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            childAspectRatio: 0.75,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+          ),
+          itemCount: _videos.length,
+          itemBuilder: (context, index) {
+            final video = _videos[index];
+            return YouTubeVideoWidget(
+              video: video,
+              showDescription: false,
+              onTap: () => _showVideoDetails(video),
+            );
+          },
+        ),
+        const SizedBox(height: 20),
+        Center(
+          child: TextButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => YouTubeSearchScreen(
+                    initialQuery: widget.searchQuery,
+                    moduleTitle: widget.moduleTitle,
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.video_library),
+            label: const Text('View All Videos'),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.blue[400],
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showVideoDetails(YouTubeVideo video) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(video.title),
+        content: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.7,
+          height: MediaQuery.of(context).size.height * 0.5,
+          child: YouTubeVideoWidget(
+            video: video,
+            showEmbed: true,
+            showDescription: true,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
     );
   }
 }

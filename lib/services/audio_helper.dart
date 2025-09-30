@@ -2,7 +2,6 @@
 
 import 'dart:async';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter_tts/flutter_tts.dart';
 import 'package:flutter/foundation.dart';
 
 enum AudioPlayerState {
@@ -15,7 +14,7 @@ enum AudioPlayerState {
 
 enum AudioSource {
   podcast,
-  tts,
+  tts, // Placeholder for future TTS implementation
 }
 
 class AudioHelper {
@@ -25,9 +24,6 @@ class AudioHelper {
 
   // Audio player for podcast URLs
   final AudioPlayer _audioPlayer = AudioPlayer();
-
-  // Text-to-speech for fallback
-  final FlutterTts _flutterTts = FlutterTts();
 
   // Current state tracking
   AudioPlayerState _currentState = AudioPlayerState.stopped;
@@ -53,9 +49,6 @@ class AudioHelper {
 
   Future<void> initialize() async {
     try {
-      // Initialize TTS
-      await _initializeTts();
-
       // Set up audio player listeners
       _audioPlayer.onPlayerStateChanged.listen((PlayerState state) {
         switch (state) {
@@ -98,55 +91,7 @@ class AudioHelper {
     }
   }
 
-  Future<void> _initializeTts() async {
-    try {
-      // Configure TTS settings
-      await _flutterTts.setLanguage("en-US");
-      await _flutterTts
-          .setSpeechRate(0.8); // Slightly slower for better comprehension
-      await _flutterTts.setVolume(1.0);
-      await _flutterTts.setPitch(1.0);
-
-      // Set up TTS callbacks
-      _flutterTts.setStartHandler(() {
-        if (_currentSource == AudioSource.tts) {
-          _updateState(AudioPlayerState.playing);
-        }
-      });
-
-      _flutterTts.setCompletionHandler(() {
-        if (_currentSource == AudioSource.tts) {
-          _updateState(AudioPlayerState.stopped);
-          _currentModuleId = null;
-          _currentSource = null;
-        }
-      });
-
-      _flutterTts.setErrorHandler((dynamic message) {
-        if (kDebugMode) {
-          print('🔴 TTS Error: $message');
-        }
-        if (_currentSource == AudioSource.tts) {
-          _updateState(AudioPlayerState.error);
-        }
-      });
-
-      _flutterTts.setCancelHandler(() {
-        if (_currentSource == AudioSource.tts) {
-          _updateState(AudioPlayerState.stopped);
-          _currentModuleId = null;
-          _currentSource = null;
-        }
-      });
-    } catch (e) {
-      if (kDebugMode) {
-        print('🔴 TTS initialization error: $e');
-      }
-      throw e;
-    }
-  }
-
-  /// Play audio for a module - podcast URL if available, otherwise TTS
+  /// Play audio for a module - podcast URL if available, otherwise show TTS message
   Future<void> playModuleAudio({
     required String moduleId,
     required String description,
@@ -163,8 +108,13 @@ class AudioHelper {
         // Try to play podcast URL
         await _playPodcast(podcastUrl);
       } else {
-        // Fallback to TTS
-        await _playTts(description);
+        // Show message about TTS not being available
+        if (kDebugMode) {
+          print(
+              '🔵 TTS not available on Windows - would read:  ${description.substring(0, 50)}...');
+        }
+        throw Exception(
+            'TTS not available on Windows. Please provide a podcast URL for audio playback.');
       }
 
       if (kDebugMode) {
@@ -178,12 +128,14 @@ class AudioHelper {
       _updateState(AudioPlayerState.error);
       _currentModuleId = null;
       _currentSource = null;
+      rethrow;
     }
   }
 
   Future<void> _playPodcast(String podcastUrl) async {
     try {
       _currentSource = AudioSource.podcast;
+
       // Use UrlSource for web URLs
       if (podcastUrl.startsWith('http')) {
         await _audioPlayer.play(UrlSource(podcastUrl));
@@ -191,49 +143,16 @@ class AudioHelper {
         // Use AssetSource for local assets
         await _audioPlayer.play(AssetSource(podcastUrl));
       }
+
       if (kDebugMode) {
-        print('� Playing podcast: $podcastUrl');
+        print('🔊 Playing podcast: $podcastUrl');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('🔴 Podcast playback failed, falling back to TTS: $e');
-      }
-      // Fallback to TTS if podcast fails
-      _currentSource = AudioSource.tts;
-      throw e; // Re-throw to trigger TTS fallback in calling method
-    }
-  }
-
-  Future<void> _playTts(String text) async {
-    try {
-      _currentSource = AudioSource.tts;
-
-      // Clean the text for better TTS
-      String cleanText = _cleanTextForTts(text);
-
-      await _flutterTts.speak(cleanText);
-      if (kDebugMode) {
-        print('🔊 Playing TTS for text: ${cleanText.substring(0, 50)}...');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('🔴 TTS playback failed: $e');
+        print('🔴 Podcast playback failed: $e');
       }
       throw e;
     }
-  }
-
-  /// Clean text for better TTS pronunciation
-  String _cleanTextForTts(String text) {
-    return text
-        .replaceAll(RegExp(r'\*\*([^*]+)\*\*'), r'\1') // Remove markdown bold
-        .replaceAll(RegExp(r'\*([^*]+)\*'), r'\1') // Remove markdown italic
-        .replaceAll(RegExp(r'#{1,6}\s*'), '') // Remove markdown headers
-        .replaceAll(
-            RegExp(r'\[([^\]]+)\]\([^)]+\)'), r'\1') // Remove markdown links
-        .replaceAll(RegExp(r'`([^`]+)`'), r'\1') // Remove code blocks
-        .replaceAll(RegExp(r'\s+'), ' ') // Normalize whitespace
-        .trim();
   }
 
   /// Pause current playback
@@ -241,8 +160,6 @@ class AudioHelper {
     try {
       if (_currentSource == AudioSource.podcast) {
         await _audioPlayer.pause();
-      } else if (_currentSource == AudioSource.tts) {
-        await _flutterTts.pause();
       }
 
       if (kDebugMode) {
@@ -260,9 +177,6 @@ class AudioHelper {
     try {
       if (_currentSource == AudioSource.podcast) {
         await _audioPlayer.resume();
-      } else if (_currentSource == AudioSource.tts) {
-        // TTS doesn't have resume, need to restart from beginning
-        await _flutterTts.speak(_cleanTextForTts('Resuming text-to-speech...'));
       }
 
       if (kDebugMode) {
@@ -278,12 +192,7 @@ class AudioHelper {
   /// Stop current playback
   Future<void> stop() async {
     try {
-      if (_currentSource == AudioSource.podcast) {
-        await _audioPlayer.stop();
-      } else if (_currentSource == AudioSource.tts) {
-        await _flutterTts.stop();
-      }
-
+      await _audioPlayer.stop();
       _updateState(AudioPlayerState.stopped);
       _currentModuleId = null;
       _currentSource = null;
@@ -315,7 +224,6 @@ class AudioHelper {
   Future<void> setVolume(double volume) async {
     try {
       await _audioPlayer.setVolume(volume);
-      await _flutterTts.setVolume(volume);
     } catch (e) {
       if (kDebugMode) {
         print('🔴 Error setting volume: $e');
@@ -345,7 +253,6 @@ class AudioHelper {
     try {
       await stop();
       await _audioPlayer.dispose();
-      await _flutterTts.stop();
       await _stateController.close();
       await _positionController.close();
       await _durationController.close();

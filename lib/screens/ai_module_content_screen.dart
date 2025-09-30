@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/groq_service.dart';
 import '../services/activity_service.dart';
 import '../services/youtube_service.dart';
+import '../services/audio_helper_simplified.dart';
 import '../widgets/youtube_video_widget.dart';
 import 'course_completion_quiz_screen.dart';
 import 'youtube_search_screen.dart';
@@ -28,6 +29,7 @@ class _AIModuleContentScreenState extends State<AIModuleContentScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final GroqService _groqService = GroqService();
+  final AudioHelper _audioHelper = AudioHelper();
 
   // Cache for AI-generated content
   final Map<String, Future<String>> _contentCache = {};
@@ -35,7 +37,7 @@ class _AIModuleContentScreenState extends State<AIModuleContentScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
     _trackModuleStart();
   }
 
@@ -6560,6 +6562,7 @@ System.out.println("Removed: " + front);  // Output: First
             Tab(text: "Quiz"),
             Tab(text: "Examples"),
             Tab(text: "Videos"),
+            Tab(text: "Audio"),
           ],
         ),
       ),
@@ -6616,6 +6619,7 @@ System.out.println("Removed: " + front);  // Output: First
                 _buildContentTab('quiz'),
                 _buildContentTab('examples'),
                 _buildVideosTab(),
+                _buildAudioTab(),
               ],
             ),
           ),
@@ -6875,6 +6879,301 @@ System.out.println("Removed: " + front);  // Output: First
       searchQuery: widget.moduleTitle,
     );
   }
+
+  Widget _buildAudioTab() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header section
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.headphones,
+                          size: 28, color: Colors.blue),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Audio Learning - ${widget.moduleTitle}',
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    widget.moduleDescription,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Audio controls section
+          Expanded(
+            child: StreamBuilder<AudioPlayerState>(
+              stream: _audioHelper.stateStream,
+              builder: (context, snapshot) {
+                final audioState = snapshot.data ?? AudioPlayerState.stopped;
+
+                return Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Audio status indicator
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _getAudioStateColor(audioState)
+                                .withOpacity(0.1),
+                            border: Border.all(
+                              color: _getAudioStateColor(audioState),
+                              width: 3,
+                            ),
+                          ),
+                          child: Icon(
+                            _getAudioStateIcon(audioState),
+                            size: 60,
+                            color: _getAudioStateColor(audioState),
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Status text
+                        Text(
+                          _getAudioStateText(audioState),
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 32),
+
+                        // Control buttons
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: [
+                            // Play/Pause button
+                            ElevatedButton.icon(
+                              onPressed: audioState == AudioPlayerState.loading
+                                  ? null
+                                  : () => _toggleAudio(audioState),
+                              icon: Icon(
+                                audioState == AudioPlayerState.playing
+                                    ? Icons.pause
+                                    : Icons.play_arrow,
+                              ),
+                              label: Text(
+                                audioState == AudioPlayerState.playing
+                                    ? 'Pause'
+                                    : 'Play Audio',
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+
+                            // Stop button
+                            ElevatedButton.icon(
+                              onPressed: audioState == AudioPlayerState.stopped
+                                  ? null
+                                  : () => _stopAudio(),
+                              icon: const Icon(Icons.stop),
+                              label: const Text('Stop'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 24,
+                                  vertical: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 24),
+
+                        // Instructions text
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            children: [
+                              const Text(
+                                'Audio Learning Instructions:',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Text(
+                                '• Click "Play Audio" to listen to educational audio content\n'
+                                '• Currently using sample audio files for demonstration\n'
+                                '• In production: Connect your own podcast URLs or audio API\n'
+                                '• Use headphones for the best learning experience\n'
+                                '• Audio controls: Play/Pause and Stop available',
+                                style: TextStyle(fontSize: 14),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getAudioStateColor(AudioPlayerState state) {
+    switch (state) {
+      case AudioPlayerState.playing:
+        return Colors.green;
+      case AudioPlayerState.paused:
+        return Colors.orange;
+      case AudioPlayerState.loading:
+        return Colors.blue;
+      case AudioPlayerState.error:
+        return Colors.red;
+      case AudioPlayerState.stopped:
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _getAudioStateIcon(AudioPlayerState state) {
+    switch (state) {
+      case AudioPlayerState.playing:
+        return Icons.play_circle_filled;
+      case AudioPlayerState.paused:
+        return Icons.pause_circle_filled;
+      case AudioPlayerState.loading:
+        return Icons.hourglass_empty;
+      case AudioPlayerState.error:
+        return Icons.error;
+      case AudioPlayerState.stopped:
+      default:
+        return Icons.stop_circle;
+    }
+  }
+
+  String _getAudioStateText(AudioPlayerState state) {
+    switch (state) {
+      case AudioPlayerState.playing:
+        return 'Audio is playing...';
+      case AudioPlayerState.paused:
+        return 'Audio is paused';
+      case AudioPlayerState.loading:
+        return 'Loading audio...';
+      case AudioPlayerState.error:
+        return 'Audio error occurred';
+      case AudioPlayerState.stopped:
+      default:
+        return 'Ready to play audio';
+    }
+  }
+
+  Future<void> _toggleAudio(AudioPlayerState currentState) async {
+    try {
+      if (currentState == AudioPlayerState.playing) {
+        await _audioHelper.pause();
+      } else {
+        // For AI module content, we'll use a sample podcast URL for testing
+        // In production, you would get these from your course data or API
+        String sampleAudioUrl = _getSampleAudioUrl(widget.moduleTitle);
+
+        await _audioHelper.playModuleAudio(
+          moduleId: widget.moduleTitle.replaceAll(' ', '_').toLowerCase(),
+          description: widget.moduleDescription,
+          podcastUrl: sampleAudioUrl, // Using sample URL for testing
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        String errorMessage = e.toString();
+        if (errorMessage.contains('TTS not available')) {
+          errorMessage =
+              'Text-to-speech is not available on this platform. Please add podcast URLs to course modules for audio functionality.';
+        }
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _stopAudio() async {
+    try {
+      await _audioHelper.stop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error stopping audio: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Get a sample audio URL for testing purposes
+  /// In production, you would fetch these from your backend or course data
+  String _getSampleAudioUrl(String moduleTitle) {
+    // Sample educational audio URLs - using internet archive public domain content
+    final Map<String, String> sampleAudios = {
+      'Introduction to Python and Setting Up the Environment':
+          'https://archive.org/download/testmp3testfile/mpthreetest.mp3',
+      'Control Structures and Functions in Python':
+          'https://file-examples.com/storage/feb68c7ccca02a4b4085d37/2017/11/file_example_MP3_700KB.mp3',
+      'Object-Oriented Programming in Python':
+          'https://www.soundjay.com/misc/beep-28.wav',
+      'Web Development with Flask/Django':
+          'https://www.soundjay.com/misc/beep-10.wav',
+      'Data Science with Python': 'https://www.soundjay.com/misc/beep-07a.wav',
+      'Machine Learning Basics': 'https://www.soundjay.com/misc/beep-5.wav',
+      'Flutter Development': 'https://www.soundjay.com/misc/beep-3.wav',
+      'Default': 'https://www.soundjay.com/misc/beep-07a.wav', // Fallback beep
+    };
+
+    // Return specific audio for module or default
+    return sampleAudios[moduleTitle] ?? sampleAudios['Default']!;
+  }
 }
 
 class _YouTubeVideosWidget extends StatefulWidget {
@@ -6902,12 +7201,32 @@ class _YouTubeVideosWidgetState extends State<_YouTubeVideosWidget> {
   }
 
   Future<void> _loadVideos() async {
+    // Validate search query first
+    if (widget.searchQuery.trim().isEmpty) {
+      print('🔴 _YouTubeVideosWidget: Empty search query provided');
+      setState(() {
+        _error = 'No search topic provided for YouTube videos';
+        _isLoading = false;
+      });
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
+    // Print debug information
+    YouTubeService.printDebugInfo(query: widget.searchQuery);
+
     try {
+      // Validate API key first
+      final isValidKey = await YouTubeService.validateApiKey();
+      if (!isValidKey) {
+        throw Exception(
+            'YouTube API key is invalid or not working. Please check your .env file and ensure YouTube Data API v3 is enabled.');
+      }
+
       final videos = await YouTubeService.searchVideos(
         query: widget.searchQuery,
         maxResults: 6,
@@ -7180,9 +7499,9 @@ class _YouTubeVideosWidgetState extends State<_YouTubeVideosWidget> {
           physics: const NeverScrollableScrollPhysics(),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
-            childAspectRatio: 0.75,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
+            childAspectRatio: 1.6,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
           ),
           itemCount: _videos.length,
           itemBuilder: (context, index) {
@@ -7190,6 +7509,7 @@ class _YouTubeVideosWidgetState extends State<_YouTubeVideosWidget> {
             return YouTubeVideoWidget(
               video: video,
               showDescription: false,
+              compact: true,
               onTap: () => _showVideoDetails(video),
             );
           },

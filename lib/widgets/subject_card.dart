@@ -1,1 +1,0 @@
-// Subject Card Widget

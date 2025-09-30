@@ -8,10 +8,10 @@ class CourseScreen extends StatelessWidget {
   final List<Map<String, dynamic>> modules; // dynamic for Groq
   final String? learningStyle;
   final String? skillLevel;
-  
+
   const CourseScreen({
-    super.key, 
-    required this.title, 
+    super.key,
+    required this.title,
     required this.modules,
     this.learningStyle,
     this.skillLevel,
@@ -31,7 +31,8 @@ class CourseScreen extends StatelessWidget {
               padding: const EdgeInsets.only(right: 16.0),
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: Colors.blue.shade600,
                     borderRadius: BorderRadius.circular(12),
@@ -49,91 +50,83 @@ class CourseScreen extends StatelessWidget {
             ),
         ],
       ),
-      body: Column(
-        children: [
-          // Personalization header if available
-          if (learningStyle != null || skillLevel != null)
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Progress indicator
             Container(
-              width: double.infinity,
               padding: const EdgeInsets.all(16),
-              margin: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.blue.shade600, Colors.blue.shade400],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.1),
+                    spreadRadius: 1,
+                    blurRadius: 3,
+                    offset: const Offset(0, 1),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.auto_awesome, color: Colors.white, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'Personalized for You',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'Course Progress',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey[800],
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  if (learningStyle != null && skillLevel != null)
-                    Text(
-                      'This course is tailored for $learningStyle learners at $skillLevel level',
-                      style: TextStyle(
-                        color: Colors.white.withOpacity(0.9),
-                        fontSize: 14,
-                      ),
-                    ),
+                  LinearProgressIndicator(
+                    value: 0.3, // Placeholder progress
+                    backgroundColor: Colors.grey[300],
+                    valueColor:
+                        AlwaysStoppedAnimation<Color>(Colors.blue.shade600),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${modules.length} modules available',
+                    style: TextStyle(color: Colors.grey[600]),
+                  ),
                 ],
               ),
             ),
-          
-          // Modules grid
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: modules.isEmpty 
-                ? const Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.school, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text(
-                          'No modules available',
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  )
-                : GridView.count(
-                    crossAxisCount: 3,
-                    childAspectRatio: 0.9,
-                    crossAxisSpacing: 16,
-                    mainAxisSpacing: 16,
-                    children: List.generate(modules.length, (index) {
-                      final module = modules[index];
-                      return ModuleCard(
-                        title: module['title']?.toString() ?? "Untitled",
-                        description: module['description']?.toString() ?? "",
-                        index: index + 1,
-                        course: courses.isNotEmpty
-                            ? courses[0]
-                            : null, // Example: pass the first course
-                        learningStyle: learningStyle,
-                      );
-                    }),
-                  ),
+            const SizedBox(height: 20),
+
+            // Modules list
+            Text(
+              'Course Modules',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey[800],
+              ),
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+
+            Expanded(
+              child: ListView.builder(
+                itemCount: modules.length,
+                itemBuilder: (context, index) {
+                  final module = modules[index];
+                  return ModuleCard(
+                    title: module['title'] ?? 'Module ${index + 1}',
+                    description:
+                        module['description'] ?? 'No description available',
+                    index: index,
+                    learningStyle: learningStyle,
+                    course: null, // No course object in this simplified version
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -162,169 +155,220 @@ class ModuleCard extends StatefulWidget {
 class _ModuleCardState extends State<ModuleCard> {
   bool _isHovered = false;
 
-
-
-
-
-
-
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      onEnter: (_) => setState(() => _isHovered = true),
-      onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: _isHovered ? Colors.blue.shade800 : Colors.blue.shade100,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black26,
-              blurRadius: 6,
-              offset: const Offset(2, 2),
-            )
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "${widget.index}. ${widget.title}",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: _isHovered ? Colors.white : Colors.black87,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: Text(
-                widget.description,
-                style: TextStyle(
-                  fontSize: 14,
-                  color: _isHovered ? Colors.white70 : Colors.black54,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: GestureDetector(
+          onTap: () {
+            // Track module access
+            ActivityService.addActivity(
+              type: ActivityService.activityModule,
+              title: 'Accessed ${widget.title}',
+              description: 'Opened module for learning',
+              metadata: {
+                'moduleTitle': widget.title,
+                'learningStyle': widget.learningStyle,
+              },
+            );
+
+            // Navigate to AI module content screen
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AIModuleContentScreen(
+                  moduleTitle: widget.title,
+                  moduleDescription: widget.description,
+                  learningStyle: widget.learningStyle,
+                  courseTitle: widget.course?.title,
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () async {
-                // Get learning style if available, otherwise use default
-                final learningStyle = await ActivityService.getLearningStyle();
-                
-                // Always use AIModuleContentScreen for comprehensive structured content
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AIModuleContentScreen(
-                      moduleTitle: widget.title,
-                      moduleDescription: widget.description,
-                      learningStyle: learningStyle ?? 'Visual', // Default to Visual if no VARK completed
-                      courseTitle: 'AI Generated Course',
-                    ),
+            );
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            transform: Matrix4.identity()..scale(_isHovered ? 1.02 : 1.0),
+            child: Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: _isHovered
+                        ? Colors.blue.withOpacity(0.2)
+                        : Colors.grey.withOpacity(0.1),
+                    spreadRadius: _isHovered ? 3 : 1,
+                    blurRadius: _isHovered ? 10 : 5,
+                    offset: const Offset(0, 3),
                   ),
-                );
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                ],
+                border: _isHovered
+                    ? Border.all(color: Colors.blue.shade300, width: 2)
+                    : null,
               ),
-              child: const Text("Start Module"),
-            )
-          ],
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header row with module number and title
+                  Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade600,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${widget.index + 1}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.title,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[800],
+                              ),
+                            ),
+                            if (widget.learningStyle != null)
+                              Container(
+                                margin: const EdgeInsets.only(top: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade100,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  widget.learningStyle!,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.blue.shade700,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.grey[400],
+                        size: 20,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Module description
+                  Text(
+                    widget.description,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                      height: 1.4,
+                    ),
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Bottom row with features info
+                  Row(
+                    children: [
+                      _buildFeatureChip(Icons.book, 'Content'),
+                      const SizedBox(width: 8),
+                      _buildFeatureChip(Icons.quiz, 'Quiz'),
+                      const SizedBox(width: 8),
+                      _buildFeatureChip(Icons.video_library, 'Videos'),
+                      const SizedBox(width: 8),
+                      _buildFeatureChip(Icons.headphones, 'Audio'),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildFeatureChip(IconData icon, String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: Colors.grey[600]),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// ✅ Sample course modules (still works because dynamic is allowed)
-final List<Map<String, dynamic>> modules = [
-  {
-    "title": "Foundations Of Data Structures",
-    "description":
-        "Understand the basic concepts and definitions of data structures. Learn about their importance in computer science..."
-  },
-  {
-    "title": "Arrays And Linked Lists",
-    "description":
-        "Dive into the details of arrays and linked lists. Learn about their structures, operations, and use cases..."
-  },
-  {
-    "title": "Stacks And Queues",
-    "description":
-        "Explore the concepts of stacks and queues, including their structures and operations..."
-  },
-  {
-    "title": "Trees And Binary Trees",
-    "description":
-        "Examine the structures and properties of trees, with a focus on binary trees..."
-  },
-  {
-    "title": "Heaps And Priority Queues",
-    "description":
-        "Understand the concepts of heaps and priority queues, including their properties and operations..."
-  },
-  {
-    "title": "Hash Tables",
-    "description":
-        "Delve into the workings of hash tables and their importance in ensuring fast data retrieval..."
-  },
-  {
-    "title": "Graphs And Graph Algorithms",
-    "description":
-        "Learn about graph data structures and their representations. Understand various graph algorithms..."
-  },
-  {
-    "title": "Advanced Data Structures",
-    "description":
-        "Explore advanced data structures such as AVL trees, B-trees, and red-black trees..."
-  },
-  {
-    "title": "Practical Applications And Case Studies",
-    "description":
-        "Apply the knowledge gained throughout the course to real-world scenarios and case studies..."
-  },
-];
-
-final List<Course> courses = [
+// Sample data (keeping the existing structure)
+List<Course> sampleCourses = [
   Course(
-    title: "Data Structures",
+    title: "Flutter Development",
     modules: [
       Module(
-        title: "Introduction to DS",
+        title: "Introduction to Flutter",
         lessons: [
           Lesson(
-            title: "1.1.1 Introduction",
-            content: '''
-Data structures are the backbone of computer science. They provide systematic ways of organizing, processing, retrieving, and storing data. 
-A good understanding of data structures ensures that programs are efficient and scalable.
-
-The importance of data structures lies in their ability to optimize algorithms. For example, searching for an element in an unsorted list can take O(n) time, 
-while searching in a balanced binary search tree can be reduced to O(log n).
-
-From operating systems to artificial intelligence, almost every domain in computing relies on the clever use of data structures.
-''',
+            title: "1.1.1 What is Flutter?",
+            content:
+                "Flutter is Google's UI toolkit for building natively compiled applications for mobile, web, and desktop from a single codebase...",
           ),
           Lesson(
-            title: "1.1.2 Types of DS",
-            content: '''
-There are two broad categories of data structures: Primitive and Non-Primitive.
-
-- **Primitive Data Structures**: These are the basic structures directly available in most programming languages. Examples include integers, floats, characters, and booleans.
-
-- **Non-Primitive Data Structures**: These are more advanced and can be classified as:
-  - **Linear Data Structures**: Arrays, Linked Lists, Stacks, Queues
-  - **Non-Linear Data Structures**: Trees, Graphs
-  - **Hash-based Data Structures**: Hash Tables
-
-Each has unique strengths and limitations. Choosing the right one depends on the problem at hand.
-''',
+            title: "1.1.2 Setting up Flutter",
+            content:
+                "To get started with Flutter development, you need to install Flutter SDK, set up an IDE like VS Code or Android Studio...",
+          ),
+        ],
+      ),
+      Module(
+        title: "Widgets and Layout",
+        lessons: [
+          Lesson(
+            title: "2.1.1 Basic Widgets",
+            content:
+                "Flutter provides a rich set of widgets including Text, Container, Row, Column, Stack, and many more...",
+          ),
+          Lesson(
+            title: "2.1.2 Layout Widgets",
+            content:
+                "Layout widgets in Flutter help you arrange other widgets in specific ways. The most common ones are Row, Column, and Stack...",
           ),
         ],
       ),

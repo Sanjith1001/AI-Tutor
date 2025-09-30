@@ -34,14 +34,29 @@ class _YouTubeSearchScreenState extends State<YouTubeSearchScreen> {
   }
 
   Future<void> _searchVideos(String query) async {
-    if (query.trim().isEmpty) return;
+    if (query.trim().isEmpty) {
+      print('🔴 YouTubeSearchScreen: Empty query provided');
+      return;
+    }
 
     setState(() {
       _isLoading = true;
       _error = null;
     });
 
+    // Print debug information
+    YouTubeService.printDebugInfo(query: query);
+
     try {
+      // Only validate API key on first search to avoid too many validation calls
+      if (_videos.isEmpty) {
+        final isValidKey = await YouTubeService.validateApiKey();
+        if (!isValidKey) {
+          throw Exception(
+              'YouTube API key is invalid or not working. Please check your .env file and ensure YouTube Data API v3 is enabled.');
+        }
+      }
+
       final videos = await YouTubeService.searchVideos(
         query: query,
         maxResults: 12,

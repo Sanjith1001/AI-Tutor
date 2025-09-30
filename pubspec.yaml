@@ -12,6 +12,9 @@ dependencies:
   shared_preferences: ^2.2.2
   crypto: ^3.0.3
   flutter_dotenv: ^5.1.0
+  url_launcher: ^6.2.1
+  audioplayers: ^5.2.1
+  # flutter_tts: ^3.8.5  # Disabled for Windows compatibility
   # Add other dependencies as needed
 
 dev_dependencies:

@@ -1,17 +1,47 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:crypto/crypto.dart';
+import 'package:http/http.dart' as http;
 
 class AuthBackendService {
-  static const String _usersKey = 'registered_users';
+  static const String baseUrl = 'http://localhost:3000/api';
   static const String _currentUserKey = 'current_user';
-  static const String _isLoggedInKey = 'is_logged_in';
-  static const String _activeSessionsKey = 'active_sessions';
-  
-  // Admin credentials
-  static const String _adminEmail = 'admin@bytebrain.com';
-  static const String _adminPassword = 'admin123';
-  static const String _adminName = 'ByteBrain Administrator';
+  static const String _authTokenKey = 'auth_token';
+  static const String _refreshTokenKey = 'refresh_token';
+
+  // Get stored token
+  static Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_authTokenKey);
+  }
+
+  // Store token
+  static Future<void> storeToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_authTokenKey, token);
+  }
+
+  // Store refresh token
+  static Future<void> storeRefreshToken(String refreshToken) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_refreshTokenKey, refreshToken);
+  }
+
+  // Clear tokens
+  static Future<void> clearTokens() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_authTokenKey);
+    await prefs.remove(_refreshTokenKey);
+    await prefs.remove(_currentUserKey);
+  }
+
+  // Get headers with auth token
+  static Future<Map<String, String>> getHeaders() async {
+    final token = await getToken();
+    return {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Bearer $token',
+    };
+  }
 
   // Register a new user
   static Future<Map<String, dynamic>> registerUser({
@@ -20,67 +50,58 @@ class AuthBackendService {
     required String name,
   }) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      
-      // Validate email format
-      if (!_isValidEmail(email)) {
-        return {
-          'success': false,
-          'message': 'Please enter a valid email address'
-        };
-      }
+      // Split name into first and last name
+      final nameParts = name.trim().split(' ');
+      final firstName = nameParts.first;
+      final lastName =
+          nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
 
-      // Validate password strength
-      if (password.length < 6) {
-        return {
-          'success': false,
-          'message': 'Password must be at least 6 characters long'
-        };
-      }
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/register'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'email': email,
+          'password': password,
+          'firstName': firstName,
+          'lastName': lastName,
+        }),
+      );
 
-      // Get existing users
-      final existingUsers = await _getUsers();
-      
-      // Check if user already exists
-      if (existingUsers.any((user) => user['email'] == email.toLowerCase())) {
-        return {
-          'success': false,
-          'message': 'An account with this email already exists'
-        };
-      }
+      final data = json.decode(response.body);
 
-      // Hash the password
-      final hashedPassword = _hashPassword(password);
-      
-      // Create new user
-      final newUser = {
-        'id': DateTime.now().millisecondsSinceEpoch.toString(),
-        'email': email.toLowerCase(),
-        'password': hashedPassword,
-        'name': name,
-        'createdAt': DateTime.now().toIso8601String(),
-      };
-
-      // Add to users list
-      existingUsers.add(newUser);
-      
-      // Save users
-      await _saveUsers(existingUsers);
-
-      return {
-        'success': true,
-        'message': 'Account created successfully!',
-        'user': {
-          'id': newUser['id'],
-          'email': newUser['email'],
-          'name': newUser['name'],
+      if (response.statusCode == 201 && data['success']) {
+        // Store tokens
+        if (data['data']['token'] != null) {
+          await storeToken(data['data']['token']);
         }
-      };
+        if (data['data']['refreshToken'] != null) {
+          await storeRefreshToken(data['data']['refreshToken']);
+        }
+
+        // Store user data
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+            _currentUserKey, json.encode(data['data']['user']));
+
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Account created successfully!',
+          'user': {
+            'id': data['data']['user']['_id'],
+            'email': data['data']['user']['email'],
+            'name':
+                '${data['data']['user']['firstName']} ${data['data']['user']['lastName']}',
+            'isAdmin': data['data']['user']['role'] == 'admin',
+          }
+        };
+      } else {
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Registration failed'
+        };
+      }
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Registration failed. Please try again.'
-      };
+      return {'success': false, 'message': 'Network error: $e'};
     }
   }
 
@@ -90,112 +111,128 @@ class AuthBackendService {
     required String password,
   }) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      
-      // Check if it's admin login
-      if (email.toLowerCase() == _adminEmail && password == _adminPassword) {
-        final adminUser = {
-          'id': 'admin_001',
-          'email': _adminEmail,
-          'name': _adminName,
-          'isAdmin': true,
-        };
-        
-        // Save admin session
-        await prefs.setString(_currentUserKey, jsonEncode(adminUser));
-        await prefs.setBool(_isLoggedInKey, true);
-        
-        return {
-          'success': true,
-          'message': 'Admin login successful!',
-          'user': adminUser,
-          'isAdmin': true,
-        };
-      }
-      
-      // Get existing users
-      final users = await _getUsers();
-      
-      // Find user by email
-      final user = users.firstWhere(
-        (user) => user['email'] == email.toLowerCase(),
-        orElse: () => {},
+      final response = await http.post(
+        Uri.parse('$baseUrl/auth/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'email': email,
+          'password': password,
+        }),
       );
 
-      if (user.isEmpty) {
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 200 && data['success']) {
+        // Store tokens
+        if (data['data']['token'] != null) {
+          await storeToken(data['data']['token']);
+        }
+        if (data['data']['refreshToken'] != null) {
+          await storeRefreshToken(data['data']['refreshToken']);
+        }
+
+        // Store user data
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+            _currentUserKey, json.encode(data['data']['user']));
+
         return {
-          'success': false,
-          'message': 'No account found with this email address'
+          'success': true,
+          'message': data['message'] ?? 'Login successful!',
+          'user': {
+            'id': data['data']['user']['_id'],
+            'email': data['data']['user']['email'],
+            'name':
+                '${data['data']['user']['firstName']} ${data['data']['user']['lastName']}',
+            'isAdmin': data['data']['user']['role'] == 'admin',
+          },
+          'isAdmin': data['data']['user']['role'] == 'admin',
         };
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Login failed'};
       }
-
-      // Verify password
-      final hashedPassword = _hashPassword(password);
-      if (user['password'] != hashedPassword) {
-        return {
-          'success': false,
-          'message': 'Incorrect password'
-        };
-      }
-
-      // Create user session data
-      final userSession = {
-        'id': user['id'],
-        'email': user['email'],
-        'name': user['name'],
-        'isAdmin': false,
-      };
-
-      // Save current user session
-      await prefs.setString(_currentUserKey, jsonEncode(userSession));
-      await prefs.setBool(_isLoggedInKey, true);
-      
-      // Add to active sessions
-      await _addActiveSession(userSession);
-
-      return {
-        'success': true,
-        'message': 'Login successful!',
-        'user': userSession,
-        'isAdmin': false,
-      };
     } catch (e) {
-      return {
-        'success': false,
-        'message': 'Login failed. Please try again.'
-      };
+      return {'success': false, 'message': 'Network error: $e'};
     }
   }
 
   // Logout user
   static Future<void> logoutUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    
-    // Get current user before logout
-    final currentUser = await getCurrentUser();
-    
-    // Remove from active sessions if not admin
-    if (currentUser != null && currentUser['isAdmin'] != true) {
-      await _removeActiveSession(currentUser['id']);
+    try {
+      final headers = await getHeaders();
+      await http.post(
+        Uri.parse('$baseUrl/auth/logout'),
+        headers: headers,
+      );
+    } catch (e) {
+      // Continue with logout even if API call fails
+      print('Logout API error: $e');
     }
-    
-    await prefs.remove(_currentUserKey);
-    await prefs.setBool(_isLoggedInKey, false);
+
+    // Clear local storage
+    await clearTokens();
   }
 
   // Check if user is logged in
   static Future<bool> isLoggedIn() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_isLoggedInKey) ?? false;
+    final token = await getToken();
+    return token != null;
   }
 
   // Get current user
   static Future<Map<String, dynamic>?> getCurrentUser() async {
-    final prefs = await SharedPreferences.getInstance();
-    final userJson = prefs.getString(_currentUserKey);
-    if (userJson != null) {
-      return jsonDecode(userJson);
+    try {
+      final headers = await getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/auth/me'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success']) {
+          final user = data['data']['user'];
+          return {
+            'id': user['_id'],
+            'email': user['email'],
+            'name': '${user['firstName']} ${user['lastName']}',
+            'isAdmin': user['role'] == 'admin',
+            'role': user['role'],
+            'firstName': user['firstName'],
+            'lastName': user['lastName'],
+            'learningStyle': user['learningStyle'],
+            'preferences': user['preferences'],
+            'createdAt': user['createdAt'],
+            'lastLogin': user['lastLogin'],
+            'isEmailVerified': user['isEmailVerified'],
+          };
+        }
+      }
+
+      // If API call fails, try to get from local storage
+      final prefs = await SharedPreferences.getInstance();
+      final userJson = prefs.getString(_currentUserKey);
+      if (userJson != null) {
+        final userData = json.decode(userJson);
+        return {
+          'id': userData['_id'],
+          'email': userData['email'],
+          'name': '${userData['firstName']} ${userData['lastName']}',
+          'isAdmin': userData['role'] == 'admin',
+          'role': userData['role'],
+          'firstName': userData['firstName'],
+          'lastName': userData['lastName'],
+          'learningStyle': userData['learningStyle'],
+          'preferences': userData['preferences'],
+          'createdAt': userData['createdAt'],
+          'lastLogin': userData['lastLogin'],
+          'isEmailVerified': userData['isEmailVerified'],
+        };
+      }
+    } catch (e) {
+      print('Get current user error: $e');
     }
+
     return null;
   }
 
@@ -205,180 +242,142 @@ class AuthBackendService {
     required String newPassword,
   }) async {
     try {
-      final currentUser = await getCurrentUser();
-      if (currentUser == null) {
-        return {
-          'success': false,
-          'message': 'Please login first'
-        };
-      }
+      final headers = await getHeaders();
+      final response = await http.put(
+        Uri.parse('$baseUrl/users/change-password'),
+        headers: headers,
+        body: json.encode({
+          'currentPassword': currentPassword,
+          'newPassword': newPassword,
+        }),
+      );
 
-      final users = await _getUsers();
-      final userIndex = users.indexWhere((user) => user['id'] == currentUser['id']);
-      
-      if (userIndex == -1) {
-        return {
-          'success': false,
-          'message': 'User not found'
-        };
-      }
-
-      // Verify current password
-      final hashedCurrentPassword = _hashPassword(currentPassword);
-      if (users[userIndex]['password'] != hashedCurrentPassword) {
-        return {
-          'success': false,
-          'message': 'Current password is incorrect'
-        };
-      }
-
-      // Validate new password
-      if (newPassword.length < 6) {
-        return {
-          'success': false,
-          'message': 'New password must be at least 6 characters long'
-        };
-      }
-
-      // Update password
-      users[userIndex]['password'] = _hashPassword(newPassword);
-      await _saveUsers(users);
-
+      final data = json.decode(response.body);
       return {
-        'success': true,
-        'message': 'Password changed successfully!'
+        'success': data['success'] ?? false,
+        'message': data['message'] ?? 'Password change failed'
       };
     } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  // Update user profile
+  static Future<Map<String, dynamic>> updateProfile({
+    String? firstName,
+    String? lastName,
+    String? bio,
+    String? country,
+    String? timezone,
+  }) async {
+    try {
+      final headers = await getHeaders();
+      final body = <String, dynamic>{};
+
+      if (firstName != null) body['firstName'] = firstName;
+      if (lastName != null) body['lastName'] = lastName;
+      if (bio != null) body['bio'] = bio;
+      if (country != null) body['country'] = country;
+      if (timezone != null) body['timezone'] = timezone;
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/users/profile'),
+        headers: headers,
+        body: json.encode(body),
+      );
+
+      final data = json.decode(response.body);
+
+      if (data['success']) {
+        // Update local storage
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+            _currentUserKey, json.encode(data['data']['user']));
+      }
+
       return {
-        'success': false,
-        'message': 'Failed to change password. Please try again.'
+        'success': data['success'] ?? false,
+        'message': data['message'] ?? 'Profile update failed'
       };
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  // Update learning style
+  static Future<Map<String, dynamic>> updateLearningStyle({
+    required Map<String, dynamic> learningStyle,
+  }) async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.put(
+        Uri.parse('$baseUrl/users/learning-style'),
+        headers: headers,
+        body: json.encode({
+          'learningStyle': learningStyle,
+        }),
+      );
+
+      final data = json.decode(response.body);
+
+      if (data['success']) {
+        // Update local storage
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString(
+            _currentUserKey, json.encode(data['data']['user']));
+      }
+
+      return {
+        'success': data['success'] ?? false,
+        'message': data['message'] ?? 'Learning style update failed'
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
     }
   }
 
   // Delete account
   static Future<Map<String, dynamic>> deleteAccount() async {
     try {
-      final currentUser = await getCurrentUser();
-      if (currentUser == null) {
-        return {
-          'success': false,
-          'message': 'Please login first'
-        };
+      final headers = await getHeaders();
+      final response = await http.delete(
+        Uri.parse('$baseUrl/users/account'),
+        headers: headers,
+      );
+
+      final data = json.decode(response.body);
+
+      if (data['success']) {
+        await clearTokens();
       }
 
-      final users = await _getUsers();
-      users.removeWhere((user) => user['id'] == currentUser['id']);
-      await _saveUsers(users);
-      await logoutUser();
-
       return {
-        'success': true,
-        'message': 'Account deleted successfully'
+        'success': data['success'] ?? false,
+        'message': data['message'] ?? 'Account deletion failed'
       };
     } catch (e) {
+      return {'success': false, 'message': 'Network error: $e'};
+    }
+  }
+
+  // Health check
+  static Future<Map<String, dynamic>> healthCheck() async {
+    try {
+      final response = await http.get(
+        Uri.parse('http://localhost:3000/health'),
+      );
+
+      return json.decode(response.body);
+    } catch (e) {
       return {
-        'success': false,
-        'message': 'Failed to delete account. Please try again.'
+        'status': 'ERROR',
+        'message': 'Cannot connect to server: $e',
       };
     }
-  }
-
-  // Private helper methods
-  static Future<List<Map<String, dynamic>>> _getUsers() async {
-    final prefs = await SharedPreferences.getInstance();
-    final usersJson = prefs.getStringList(_usersKey) ?? [];
-    return usersJson.map((json) => jsonDecode(json) as Map<String, dynamic>).toList();
-  }
-
-  static Future<void> _saveUsers(List<Map<String, dynamic>> users) async {
-    final prefs = await SharedPreferences.getInstance();
-    final usersJson = users.map((user) => jsonEncode(user)).toList();
-    await prefs.setStringList(_usersKey, usersJson);
-  }
-
-  static String _hashPassword(String password) {
-    final bytes = utf8.encode(password + 'bytebrain_salt'); // Add salt for security
-    final digest = sha256.convert(bytes);
-    return digest.toString();
-  }
-
-  static bool _isValidEmail(String email) {
-    return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
-  }
-
-  // Get all users (for admin purposes - remove in production)
-  static Future<List<Map<String, dynamic>>> getAllUsers() async {
-    return await _getUsers();
-  }
-
-  // Get total user count
-  static Future<int> getTotalUserCount() async {
-    final users = await _getUsers();
-    return users.length;
-  }
-
-  // Get user registration statistics
-  static Future<Map<String, dynamic>> getUserStats() async {
-    final users = await _getUsers();
-    
-    if (users.isEmpty) {
-      return {
-        'totalUsers': 0,
-        'todayRegistrations': 0,
-        'thisWeekRegistrations': 0,
-        'thisMonthRegistrations': 0,
-      };
-    }
-
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-    final weekAgo = today.subtract(const Duration(days: 7));
-    final monthAgo = DateTime(now.year, now.month - 1, now.day);
-
-    int todayCount = 0;
-    int weekCount = 0;
-    int monthCount = 0;
-
-    for (final user in users) {
-      final createdAt = DateTime.parse(user['createdAt']);
-      final createdDate = DateTime(createdAt.year, createdAt.month, createdAt.day);
-      
-      if (createdDate.isAtSameMomentAs(today)) {
-        todayCount++;
-      }
-      if (createdDate.isAfter(weekAgo) || createdDate.isAtSameMomentAs(weekAgo)) {
-        weekCount++;
-      }
-      if (createdDate.isAfter(monthAgo) || createdDate.isAtSameMomentAs(monthAgo)) {
-        monthCount++;
-      }
-    }
-
-    return {
-      'totalUsers': users.length,
-      'todayRegistrations': todayCount,
-      'thisWeekRegistrations': weekCount,
-      'thisMonthRegistrations': monthCount,
-      'users': users.map((user) => {
-        'name': user['name'],
-        'email': user['email'],
-        'createdAt': user['createdAt'],
-      }).toList(),
-    };
-  }
-
-  // Clear all data (for testing)
-  static Future<void> clearAllData() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_usersKey);
-    await prefs.remove(_currentUserKey);
-    await prefs.remove(_activeSessionsKey);
-    await prefs.setBool(_isLoggedInKey, false);
   }
 
   // ============ ADMIN FUNCTIONS ============
-  
+
   // Check if current user is admin
   static Future<bool> isAdmin() async {
     final currentUser = await getCurrentUser();
@@ -388,183 +387,108 @@ class AuthBackendService {
   // Get admin credentials (for display purposes)
   static Map<String, String> getAdminCredentials() {
     return {
-      'email': _adminEmail,
-      'password': _adminPassword,
-      'name': _adminName,
+      'email': 'admin@aitutor.com',
+      'password': 'admin123',
+      'name': 'AI-Tutor Administrator',
     };
   }
 
-  // Add user to active sessions
-  static Future<void> _addActiveSession(Map<String, dynamic> user) async {
-    final prefs = await SharedPreferences.getInstance();
-    final activeSessionsJson = prefs.getStringList(_activeSessionsKey) ?? [];
-    
-    final activeSessions = activeSessionsJson
-        .map((json) => jsonDecode(json) as Map<String, dynamic>)
-        .toList();
-    
-    // Remove existing session for this user (if any)
-    activeSessions.removeWhere((session) => session['id'] == user['id']);
-    
-    // Add new session with timestamp
-    final sessionData = {
-      ...user,
-      'loginTime': DateTime.now().toIso8601String(),
-      'lastActivity': DateTime.now().toIso8601String(),
-    };
-    
-    activeSessions.add(sessionData);
-    
-    // Save back to preferences
-    final updatedJson = activeSessions.map((session) => jsonEncode(session)).toList();
-    await prefs.setStringList(_activeSessionsKey, updatedJson);
-  }
+  // Get all users (Admin only)
+  static Future<List<Map<String, dynamic>>> getAllUsers() async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/users'),
+        headers: headers,
+      );
 
-  // Remove user from active sessions
-  static Future<void> _removeActiveSession(String userId) async {
-    final prefs = await SharedPreferences.getInstance();
-    final activeSessionsJson = prefs.getStringList(_activeSessionsKey) ?? [];
-    
-    final activeSessions = activeSessionsJson
-        .map((json) => jsonDecode(json) as Map<String, dynamic>)
-        .toList();
-    
-    // Remove session for this user
-    activeSessions.removeWhere((session) => session['id'] == userId);
-    
-    // Save back to preferences
-    final updatedJson = activeSessions.map((session) => jsonEncode(session)).toList();
-    await prefs.setStringList(_activeSessionsKey, updatedJson);
-  }
-
-  // Get all active sessions (Admin only)
-  static Future<List<Map<String, dynamic>>> getActiveSessions() async {
-    if (!await isAdmin()) {
-      throw Exception('Access denied. Admin privileges required.');
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success']) {
+          return List<Map<String, dynamic>>.from(data['data']['users']);
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Get all users error: $e');
+      return [];
     }
-    
-    final prefs = await SharedPreferences.getInstance();
-    final activeSessionsJson = prefs.getStringList(_activeSessionsKey) ?? [];
-    
-    final activeSessions = activeSessionsJson
-        .map((json) => jsonDecode(json) as Map<String, dynamic>)
-        .toList();
-    
-    // Clean up old sessions (older than 24 hours)
-    final now = DateTime.now();
-    final validSessions = activeSessions.where((session) {
-      final lastActivity = DateTime.parse(session['lastActivity']);
-      final hoursSinceActivity = now.difference(lastActivity).inHours;
-      return hoursSinceActivity < 24; // Consider session active if activity within 24 hours
-    }).toList();
-    
-    // Save cleaned sessions back
-    final updatedJson = validSessions.map((session) => jsonEncode(session)).toList();
-    await prefs.setStringList(_activeSessionsKey, updatedJson);
-    
-    return validSessions;
   }
 
   // Get user statistics (Admin only)
-  static Future<Map<String, dynamic>> getUserStatistics() async {
-    if (!await isAdmin()) {
-      throw Exception('Access denied. Admin privileges required.');
+  static Future<Map<String, dynamic>> getUserStats() async {
+    try {
+      final headers = await getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/users/stats'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['success']) {
+          return data['data']['stats'];
+        }
+      }
+
+      return {
+        'totalUsers': 0,
+        'activeUsers': 0,
+        'verifiedUsers': 0,
+        'studentCount': 0,
+        'teacherCount': 0,
+        'adminCount': 0,
+      };
+    } catch (e) {
+      print('Get user stats error: $e');
+      return {
+        'totalUsers': 0,
+        'activeUsers': 0,
+        'verifiedUsers': 0,
+        'studentCount': 0,
+        'teacherCount': 0,
+        'adminCount': 0,
+      };
     }
-    
-    final allUsers = await _getUsers();
-    final activeSessions = await getActiveSessions();
-    
-    // Calculate registration trends (last 30 days)
-    final now = DateTime.now();
-    final thirtyDaysAgo = now.subtract(const Duration(days: 30));
-    
-    final recentRegistrations = allUsers.where((user) {
-      final createdAt = DateTime.parse(user['createdAt']);
-      return createdAt.isAfter(thirtyDaysAgo);
-    }).length;
-    
-    return {
-      'totalUsers': allUsers.length,
-      'activeUsers': activeSessions.length,
-      'recentRegistrations': recentRegistrations,
-      'registrationRate': recentRegistrations / 30, // per day
-      'activeSessions': activeSessions,
-    };
+  }
+
+  // Get total user count
+  static Future<int> getTotalUserCount() async {
+    final stats = await getUserStats();
+    return stats['totalUsers'] ?? 0;
+  }
+
+  // Get user statistics (backward compatibility)
+  static Future<Map<String, dynamic>> getUserStatistics() async {
+    return await getUserStats();
   }
 
   // Get detailed user list (Admin only)
   static Future<List<Map<String, dynamic>>> getDetailedUserList() async {
-    if (!await isAdmin()) {
-      throw Exception('Access denied. Admin privileges required.');
-    }
-    
-    final allUsers = await _getUsers();
-    final activeSessions = await getActiveSessions();
-    
-    // Enhance user data with session info
-    return allUsers.map((user) {
-      final activeSession = activeSessions.firstWhere(
-        (session) => session['id'] == user['id'],
-        orElse: () => {},
-      );
-      
-      return {
-        'id': user['id'],
-        'name': user['name'],
-        'email': user['email'],
-        'createdAt': user['createdAt'],
-        'isActive': activeSession.isNotEmpty,
-        'lastActivity': activeSession['lastActivity'] ?? 'Never',
-        'loginTime': activeSession['loginTime'] ?? 'Not logged in',
-      };
-    }).toList();
+    return await getAllUsers();
+  }
+
+  // Get active sessions (Admin only)
+  static Future<List<Map<String, dynamic>>> getActiveSessions() async {
+    // This would need to be implemented on the backend
+    // For now, return empty list
+    return [];
   }
 
   // Force logout user (Admin only)
   static Future<Map<String, dynamic>> forceLogoutUser(String userId) async {
-    if (!await isAdmin()) {
-      return {
-        'success': false,
-        'message': 'Access denied. Admin privileges required.'
-      };
-    }
-    
-    try {
-      await _removeActiveSession(userId);
-      return {
-        'success': true,
-        'message': 'User logged out successfully'
-      };
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Failed to logout user'
-      };
-    }
+    // This would need to be implemented on the backend
+    return {'success': false, 'message': 'Feature not implemented yet'};
   }
 
   // Update user activity timestamp
   static Future<void> updateUserActivity() async {
-    final currentUser = await getCurrentUser();
-    if (currentUser != null && currentUser['isAdmin'] != true) {
-      final prefs = await SharedPreferences.getInstance();
-      final activeSessionsJson = prefs.getStringList(_activeSessionsKey) ?? [];
-      
-      final activeSessions = activeSessionsJson
-          .map((json) => jsonDecode(json) as Map<String, dynamic>)
-          .toList();
-      
-      // Find and update user's session
-      for (int i = 0; i < activeSessions.length; i++) {
-        if (activeSessions[i]['id'] == currentUser['id']) {
-          activeSessions[i]['lastActivity'] = DateTime.now().toIso8601String();
-          break;
-        }
-      }
-      
-      // Save back to preferences
-      final updatedJson = activeSessions.map((session) => jsonEncode(session)).toList();
-      await prefs.setStringList(_activeSessionsKey, updatedJson);
-    }
+    // This could be implemented to ping the backend periodically
+    // For now, do nothing
+  }
+
+  // Clear all data (for testing)
+  static Future<void> clearAllData() async {
+    await clearTokens();
   }
 }

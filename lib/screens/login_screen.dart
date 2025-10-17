@@ -15,7 +15,7 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  
+
   bool _rememberMe = false;
   bool _obscurePassword = true;
   bool _loading = false;
@@ -136,8 +136,8 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                     ],
                   ),
                   child: SingleChildScrollView(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 28, vertical: 28),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 28, vertical: 28),
                     child: Form(
                       key: _formKey,
                       child: Column(
@@ -171,7 +171,8 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Please enter your email address';
                               }
-                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                              if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                                  .hasMatch(value)) {
                                 return 'Please enter a valid email address';
                               }
                               return null;
@@ -188,9 +189,12 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                               prefixIcon: const Icon(Icons.lock_outline),
                               suffixIcon: IconButton(
                                 icon: Icon(
-                                  _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                                  _obscurePassword
+                                      ? Icons.visibility
+                                      : Icons.visibility_off,
                                 ),
-                                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                onPressed: () => setState(
+                                    () => _obscurePassword = !_obscurePassword),
                               ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -254,6 +258,40 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                                 ),
                               ),
                             ],
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // 🔹 Test Users Info
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.blue.shade200),
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  'Test Users (MongoDB Backend):',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue.shade800,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Admin: admin@aitutor.com / admin123\n'
+                                  'Student: student@aitutor.com / student123',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.blue.shade700,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ),

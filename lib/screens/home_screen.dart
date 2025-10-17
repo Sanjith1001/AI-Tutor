@@ -5,6 +5,8 @@ import 'quiz_screen.dart';
 import 'vark_quiz_screen.dart';
 import 'admin_screen.dart';
 import 'debug_screen.dart';
+import 'course_list_screen.dart';
+import 'course_management_demo.dart';
 import '../services/activity_service.dart';
 import '../services/auth_backend_service.dart';
 
@@ -62,6 +64,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     builder: (context) => const DebugScreen(),
                   ),
                 );
+              } else if (value == 'course_demo') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const CourseManagementDemo(),
+                  ),
+                );
               }
             },
             itemBuilder: (BuildContext context) => [
@@ -86,7 +95,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Icon(Icons.admin_panel_settings, color: Colors.orange),
                     SizedBox(width: 8),
-                    Text('Admin Dashboard', style: TextStyle(color: Colors.orange)),
+                    Text('Admin Dashboard',
+                        style: TextStyle(color: Colors.orange)),
                   ],
                 ),
               ),
@@ -96,7 +106,19 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Icon(Icons.bug_report, color: Colors.purple),
                     SizedBox(width: 8),
-                    Text('Debug & Test', style: TextStyle(color: Colors.purple)),
+                    Text('Debug & Test',
+                        style: TextStyle(color: Colors.purple)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'course_demo',
+                child: Row(
+                  children: [
+                    Icon(Icons.school, color: Colors.green),
+                    SizedBox(width: 8),
+                    Text('Course Management Demo',
+                        style: TextStyle(color: Colors.green)),
                   ],
                 ),
               ),
@@ -134,24 +156,26 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
         type: BottomNavigationBarType.fixed,
       ),
-      floatingActionButton: _selectedIndex == 0 ? FloatingActionButton(
-        onPressed: () async {
-          final learningStyle = await ActivityService.getLearningStyle();
-          if (learningStyle == null) {
-            _showVARKRequiredDialog();
-          } else {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const AIContentGeneratorScreen(),
-              ),
-            );
-          }
-        },
-        backgroundColor: Colors.blue.shade600,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
-      ) : null,
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton(
+              onPressed: () async {
+                final learningStyle = await ActivityService.getLearningStyle();
+                if (learningStyle == null) {
+                  _showVARKRequiredDialog();
+                } else {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AIContentGeneratorScreen(),
+                    ),
+                  );
+                }
+              },
+              backgroundColor: Colors.blue.shade600,
+              foregroundColor: Colors.white,
+              child: const Icon(Icons.add),
+            )
+          : null,
     );
   }
 
@@ -247,7 +271,6 @@ class _CoursesPageState extends State<CoursesPage> {
             ),
           ),
           const SizedBox(height: 32),
-          
           if (!_hasCompletedVARK)
             Container(
               width: double.infinity,
@@ -313,7 +336,8 @@ class _CoursesPageState extends State<CoursesPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
                       foregroundColor: Colors.blue.shade600,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -347,7 +371,8 @@ class _CoursesPageState extends State<CoursesPage> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.check_circle, color: Colors.green.shade600, size: 24),
+                  Icon(Icons.check_circle,
+                      color: Colors.green.shade600, size: 24),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -379,48 +404,52 @@ class _CoursesPageState extends State<CoursesPage> {
                 ],
               ),
             ),
-        
-        const SizedBox(height: 32),
-        
-        const Text(
-          'Quick Actions',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+          const SizedBox(height: 32),
+          const Text(
+            'Quick Actions',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
           ),
-        ),
-        const SizedBox(height: 16),
-        
-        Row(
-          children: [
-            Expanded(
-              child: QuickActionCard(
-                icon: Icons.school,
-                title: 'Browse Courses',
-                subtitle: 'Explore existing courses',
-                onTap: () {},
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: QuickActionCard(
+                  icon: Icons.school,
+                  title: 'Browse Courses',
+                  subtitle: 'Explore existing courses',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CourseListScreen(),
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: QuickActionCard(
-                icon: Icons.quiz,
-                title: 'Take Quiz',
-                subtitle: 'Test your knowledge',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const QuizScreen(),
-                    ),
-                  );
-                },
+              const SizedBox(width: 12),
+              Expanded(
+                child: QuickActionCard(
+                  icon: Icons.quiz,
+                  title: 'Take Quiz',
+                  subtitle: 'Test your knowledge',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const QuizScreen(),
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
-        ),
-      ],
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -558,7 +587,6 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
             const SizedBox(height: 32),
-            
             Row(
               children: [
                 Expanded(
@@ -568,11 +596,13 @@ class _DashboardPageState extends State<DashboardPage> {
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          Icon(Icons.school, size: 32, color: Colors.green.shade600),
+                          Icon(Icons.school,
+                              size: 32, color: Colors.green.shade600),
                           const SizedBox(height: 8),
                           Text(
                             '${_stats['coursesCompleted'] ?? 0}',
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.bold),
                           ),
                           const Text('Courses Completed'),
                         ],
@@ -588,11 +618,13 @@ class _DashboardPageState extends State<DashboardPage> {
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          Icon(Icons.quiz, size: 32, color: Colors.blue.shade600),
+                          Icon(Icons.quiz,
+                              size: 32, color: Colors.blue.shade600),
                           const SizedBox(height: 8),
                           Text(
                             '${_stats['quizzesTaken'] ?? 0}',
-                            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                fontSize: 24, fontWeight: FontWeight.bold),
                           ),
                           const Text('Quizzes Taken'),
                         ],
@@ -602,9 +634,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ],
             ),
-            
             const SizedBox(height: 16),
-            
             Row(
               children: [
                 Expanded(
@@ -614,13 +644,16 @@ class _DashboardPageState extends State<DashboardPage> {
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          Icon(Icons.psychology, size: 32, color: Colors.purple.shade600),
+                          Icon(Icons.psychology,
+                              size: 32, color: Colors.purple.shade600),
                           const SizedBox(height: 8),
                           Text(
                             _learningStyle ?? 'Not Set',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
                           ),
-                          const Text('Learning Style', style: TextStyle(fontSize: 12)),
+                          const Text('Learning Style',
+                              style: TextStyle(fontSize: 12)),
                         ],
                       ),
                     ),
@@ -634,13 +667,16 @@ class _DashboardPageState extends State<DashboardPage> {
                       padding: const EdgeInsets.all(16),
                       child: Column(
                         children: [
-                          Icon(Icons.school, size: 32, color: Colors.teal.shade600),
+                          Icon(Icons.school,
+                              size: 32, color: Colors.teal.shade600),
                           const SizedBox(height: 8),
                           Text(
                             _skillLevel ?? 'Not Set',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            style: const TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold),
                           ),
-                          const Text('Skill Level', style: TextStyle(fontSize: 12)),
+                          const Text('Skill Level',
+                              style: TextStyle(fontSize: 12)),
                         ],
                       ),
                     ),
@@ -648,29 +684,27 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ],
             ),
-            
             const SizedBox(height: 16),
-            
             Card(
               elevation: 4,
               child: Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    Icon(Icons.trending_up, size: 32, color: Colors.orange.shade600),
+                    Icon(Icons.trending_up,
+                        size: 32, color: Colors.orange.shade600),
                     const SizedBox(height: 8),
                     Text(
                       '${_averageScore.toInt()}%',
-                      style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 24, fontWeight: FontWeight.bold),
                     ),
                     const Text('Average Score'),
                   ],
                 ),
               ),
             ),
-            
             const SizedBox(height: 32),
-            
             const Text(
               'Recent Activity',
               style: TextStyle(
@@ -680,7 +714,6 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ),
             const SizedBox(height: 16),
-            
             SizedBox(
               height: 300,
               child: _recentActivities.isEmpty
@@ -722,15 +755,18 @@ class _DashboardPageState extends State<DashboardPage> {
                           child: ListTile(
                             leading: Icon(
                               ActivityService.getActivityIcon(activity['type']),
-                              color: ActivityService.getActivityColor(activity['type']),
+                              color: ActivityService.getActivityColor(
+                                  activity['type']),
                             ),
                             title: Text(activity['title']),
                             subtitle: Text(
                               '${activity['description']} • ${ActivityService.formatTimestamp(activity['timestamp'])}',
                             ),
-                            trailing: activity['metadata'] != null && activity['metadata']['score'] != null
+                            trailing: activity['metadata'] != null &&
+                                    activity['metadata']['score'] != null
                                 ? Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: Colors.green.shade100,
                                       borderRadius: BorderRadius.circular(12),
@@ -776,7 +812,6 @@ class ProfilePage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 32),
-          
           Card(
             elevation: 4,
             child: Padding(
@@ -799,7 +834,7 @@ class ProfilePage extends StatelessWidget {
                       if (snapshot.connectionState == ConnectionState.waiting) {
                         return const CircularProgressIndicator();
                       }
-                      
+
                       final user = snapshot.data;
                       return Column(
                         children: [
@@ -826,9 +861,7 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
           ),
-          
           const SizedBox(height: 24),
-          
           Card(
             elevation: 4,
             child: Padding(
@@ -897,9 +930,7 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
           ),
-          
           const SizedBox(height: 24),
-          
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -919,12 +950,13 @@ class ProfilePage extends StatelessWidget {
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
                         ),
-                        child: const Text('Logout', style: TextStyle(color: Colors.white)),
+                        child: const Text('Logout',
+                            style: TextStyle(color: Colors.white)),
                       ),
                     ],
                   ),
                 );
-                
+
                 if (confirmed == true) {
                   await AuthBackendService.logoutUser();
                   Navigator.of(context).pushReplacement(

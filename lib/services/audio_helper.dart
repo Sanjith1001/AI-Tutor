@@ -1,6 +1,7 @@
 // services/audio_helper.dart
 
 import 'dart:async';
+import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 
@@ -51,6 +52,9 @@ class AudioHelper {
     try {
       // Set up audio player listeners
       _audioPlayer.onPlayerStateChanged.listen((PlayerState state) {
+        if (kDebugMode) {
+          print('🔊 Audio player state changed: $state');
+        }
         switch (state) {
           case PlayerState.stopped:
             _updateState(AudioPlayerState.stopped);
@@ -80,6 +84,16 @@ class AudioHelper {
         _durationController.add(duration);
       });
 
+      // Add error listener
+      _audioPlayer.onPlayerComplete.listen((_) {
+        if (kDebugMode) {
+          print('🔊 Audio playback completed');
+        }
+        _updateState(AudioPlayerState.stopped);
+        _currentModuleId = null;
+        _currentSource = null;
+      });
+
       if (kDebugMode) {
         print('🔊 AudioHelper initialized successfully');
       }
@@ -88,6 +102,7 @@ class AudioHelper {
         print('🔴 AudioHelper initialization error: $e');
       }
       _updateState(AudioPlayerState.error);
+      rethrow;
     }
   }
 
@@ -136,23 +151,88 @@ class AudioHelper {
     try {
       _currentSource = AudioSource.podcast;
 
-      // Use UrlSource for web URLs
-      if (podcastUrl.startsWith('http')) {
+      if (kDebugMode) {
+        print('🔊 Attempting to play podcast: $podcastUrl');
+      }
+
+      // Handle different URL types with Windows-specific logic
+      if (podcastUrl.startsWith('http://') ||
+          podcastUrl.startsWith('https://')) {
+        // Web URL - check if it's a supported format
+        if (!_isSupportedAudioFormat(podcastUrl)) {
+          throw Exception(
+              'Unsupported audio format. Windows supports MP3, WAV, and OGG files only.');
+        }
         await _audioPlayer.play(UrlSource(podcastUrl));
+      } else if (podcastUrl.startsWith('file://')) {
+        // File URI - use DeviceFileSource
+        final filePath = podcastUrl.replaceFirst('file://', '');
+        if (!_isSupportedAudioFormat(filePath)) {
+          throw Exception(
+              'Unsupported audio format. Windows supports MP3, WAV, and OGG files only.');
+        }
+        await _audioPlayer.play(DeviceFileSource(filePath));
+      } else if (podcastUrl.contains('\\') || podcastUrl.contains('/')) {
+        // Local file path - use DeviceFileSource
+        if (!File(podcastUrl).existsSync()) {
+          throw Exception('Audio file not found: $podcastUrl');
+        }
+        if (!_isSupportedAudioFormat(podcastUrl)) {
+          throw Exception(
+              'Unsupported audio format. Windows supports MP3, WAV, and OGG files only.');
+        }
+        await _audioPlayer.play(DeviceFileSource(podcastUrl));
       } else {
-        // Use AssetSource for local assets
+        // Asset path - use AssetSource
+        if (!_isSupportedAudioFormat(podcastUrl)) {
+          throw Exception(
+              'Unsupported audio format. Windows supports MP3, WAV, and OGG files only.');
+        }
         await _audioPlayer.play(AssetSource(podcastUrl));
       }
 
       if (kDebugMode) {
-        print('🔊 Playing podcast: $podcastUrl');
+        print('🔊 Successfully started playing podcast: $podcastUrl');
       }
     } catch (e) {
       if (kDebugMode) {
         print('🔴 Podcast playback failed: $e');
       }
+      // Re-throw with more specific error message
+      if (e.toString().contains('WindowsAudioError')) {
+        throw Exception(
+            'Windows audio error: ${e.toString()}. Try using MP3, WAV, or OGG format.');
+      }
       throw e;
     }
+  }
+
+  /// Check if the audio format is supported on Windows
+  bool _isSupportedAudioFormat(String url) {
+    final supportedExtensions = ['.mp3', '.wav', '.ogg'];
+    final lowerUrl = url.toLowerCase();
+    return supportedExtensions.any((ext) => lowerUrl.endsWith(ext));
+  }
+
+  /// Get Windows-compatible sample audio URLs for testing
+  static List<Map<String, String>> getWindowsCompatibleSampleUrls() {
+    return [
+      {
+        'title': 'Educational Podcast Sample',
+        'url': 'https://archive.org/download/testmp3testfile/mpthreetest.mp3',
+        'description': 'A sample educational audio file for testing'
+      },
+      {
+        'title': 'Programming Tutorial Audio',
+        'url': 'https://traffic.libsyn.com/secure/talkpython/python-bytes-1.mp3',
+        'description': 'Python programming podcast episode'
+      },
+      {
+        'title': 'Tech Learning Content',
+        'url': 'https://traffic.libsyn.com/secure/talkpython/python-bytes-2.mp3',
+        'description': 'Technology learning audio content'
+      },
+    ];
   }
 
   /// Pause current playback

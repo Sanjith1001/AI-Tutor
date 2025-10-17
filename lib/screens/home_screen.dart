@@ -4,6 +4,7 @@ import 'ai_content_generator_screen.dart';
 import 'quiz_screen.dart';
 import 'vark_quiz_screen.dart';
 import 'admin_screen.dart';
+import 'debug_screen.dart';
 import '../services/activity_service.dart';
 import '../services/auth_backend_service.dart';
 
@@ -54,6 +55,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     builder: (context) => const AdminScreen(),
                   ),
                 );
+              } else if (value == 'debug') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DebugScreen(),
+                  ),
+                );
               }
             },
             itemBuilder: (BuildContext context) => [
@@ -79,6 +87,16 @@ class _HomeScreenState extends State<HomeScreen> {
                     Icon(Icons.admin_panel_settings, color: Colors.orange),
                     SizedBox(width: 8),
                     Text('Admin Dashboard', style: TextStyle(color: Colors.orange)),
+                  ],
+                ),
+              ),
+              const PopupMenuItem<String>(
+                value: 'debug',
+                child: Row(
+                  children: [
+                    Icon(Icons.bug_report, color: Colors.purple),
+                    SizedBox(width: 8),
+                    Text('Debug & Test', style: TextStyle(color: Colors.purple)),
                   ],
                 ),
               ),

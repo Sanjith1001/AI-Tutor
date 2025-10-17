@@ -1,7 +1,6 @@
 // widgets/youtube_video_widget.dart
 
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import '../services/youtube_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -40,14 +39,17 @@ class YouTubeVideoWidget extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Title
-                Text(
-                  video.title,
-                  style: TextStyle(
-                    fontSize: compact ? 14 : 16,
-                    fontWeight: FontWeight.bold,
+                Flexible(
+                  child: Text(
+                    video.title,
+                    style: TextStyle(
+                      fontSize: compact ? 12 : 16,
+                      fontWeight: FontWeight.bold,
+                      height: 1.2,
+                    ),
+                    maxLines: compact ? 2 : 3,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  maxLines: compact ? 2 : 2,
-                  overflow: TextOverflow.ellipsis,
                 ),
                 SizedBox(height: compact ? 2 : 4),
 
@@ -62,18 +64,23 @@ class YouTubeVideoWidget extends StatelessWidget {
                         child: Text(
                           video.channelTitle,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: 11,
                             color: Colors.grey[600],
                           ),
                           overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ),
                       if (video.formattedViews.isNotEmpty) ...[
-                        Text(
-                          video.formattedViews,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.grey[500],
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            video.formattedViews,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.grey[500],
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
@@ -98,13 +105,13 @@ class YouTubeVideoWidget extends StatelessWidget {
                         child: Text(
                           video.duration!,
                           style: const TextStyle(
-                            fontSize: 10,
+                            fontSize: 9,
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                     ],
 
                     // Channel (compact mode) or published date
@@ -112,20 +119,25 @@ class YouTubeVideoWidget extends StatelessWidget {
                       child: Text(
                         compact ? video.channelTitle : video.timeAgo,
                         style: TextStyle(
-                          fontSize: compact ? 10 : 12,
+                          fontSize: compact ? 9 : 11,
                           color: Colors.grey[500],
                         ),
                         overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
                       ),
                     ),
 
                     // Published date in compact mode
-                    if (compact) ...[
-                      Text(
-                        video.timeAgo,
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.grey[500],
+                    if (compact && video.timeAgo.isNotEmpty) ...[
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          video.timeAgo,
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: Colors.grey[500],
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ),
                     ],
@@ -151,24 +163,37 @@ class YouTubeVideoWidget extends StatelessWidget {
                 // Action buttons
                 if (!compact) ...[
                   const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  Wrap(
+                    alignment: WrapAlignment.spaceEvenly,
+                    spacing: 4,
                     children: [
                       TextButton.icon(
                         onPressed: () => _openYouTube(),
-                        icon: const Icon(Icons.play_arrow),
-                        label: const Text('Watch'),
+                        icon: const Icon(Icons.play_arrow, size: 16),
+                        label: const Text('Watch', style: TextStyle(fontSize: 12)),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          minimumSize: const Size(0, 32),
+                        ),
                       ),
                       if (!showEmbed)
                         TextButton.icon(
                           onPressed: onTap,
-                          icon: const Icon(Icons.fullscreen),
-                          label: const Text('Embed'),
+                          icon: const Icon(Icons.fullscreen, size: 16),
+                          label: const Text('Embed', style: TextStyle(fontSize: 12)),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            minimumSize: const Size(0, 32),
+                          ),
                         ),
                       TextButton.icon(
                         onPressed: () => _shareVideo(),
-                        icon: const Icon(Icons.share),
-                        label: const Text('Share'),
+                        icon: const Icon(Icons.share, size: 16),
+                        label: const Text('Share', style: TextStyle(fontSize: 12)),
+                        style: TextButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          minimumSize: const Size(0, 32),
+                        ),
                       ),
                     ],
                   ),

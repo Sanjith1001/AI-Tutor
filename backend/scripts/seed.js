@@ -6,7 +6,7 @@ const User = require('../models/User');
 
 const seedUsers = [
   {
-    email: 'admin@aitutor.com',
+    email: 'admin@bytebrain.com',
     password: 'admin123',
     firstName: 'Admin',
     lastName: 'User',
@@ -33,7 +33,7 @@ const seedUsers = [
     timezone: 'America/New_York',
   },
   {
-    email: 'student@aitutor.com',
+    email: 'student@bytebrain.com',
     password: 'student123',
     firstName: 'John',
     lastName: 'Doe',
@@ -60,7 +60,7 @@ const seedUsers = [
     timezone: 'Europe/London',
   },
   {
-    email: 'demo@aitutor.com',
+    email: 'demo@bytebrain.com',
     password: 'demo123',
     firstName: 'Demo',
     lastName: 'Student',
@@ -116,9 +116,9 @@ const seedDatabase = async () => {
 
     console.log('🎉 Database seeding completed successfully!');
     console.log('\n📋 Seed Users Created:');
-    console.log('Admin: admin@aitutor.com / admin123');
-    console.log('Teacher: teacher@aitutor.com / teacher123');
-    console.log('Student: student@aitutor.com / student123');
+    console.log('Admin: admin@bytebrain.com / admin123');
+    console.log('Student: student@bytebrain.com / student123');
+    console.log('Demo: demo@bytebrain.com / demo123');
     
   } catch (error) {
     console.error('❌ Seeding failed:', error);

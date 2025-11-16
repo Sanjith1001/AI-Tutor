@@ -14,7 +14,10 @@ migrate_working_dir/
 
 # Environment variables
 .env
+.env.local
+.env.*.local
 apikey.txt
+*.key
 
 # IntelliJ related
 *.iml
@@ -22,20 +25,22 @@ apikey.txt
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
+# VS Code
+.vscode/
 
 # Flutter/Dart/Pub related
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
-/build/
-/coverage/
+build/
+coverage/
+frontend/build/
+frontend/.dart_tool/
 
 # Symbolication related
 app.*.symbols
@@ -47,3 +52,75 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+frontend/android/app/debug
+frontend/android/app/profile
+frontend/android/app/release
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+backend/node_modules/
+Byte_Brain/node_modules/
+chatbot/node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+Byte_Brain/.venv/
+Byte_Brain/venv/
+chatbot/.venv/
+chatbot/venv/
+*.egg-info/
+dist/
+downloads/
+.eggs/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+*~
+.cache/
+
+# Git
+.git/objects/
+.git/refs/
+.git/logs/
+
+# Chatbot submission folder (if temporary)
+chatbot_submission/
+
+# Additional Node.js modules
+**/node_modules/
+node_modules
+Byte_Brain/node_modules

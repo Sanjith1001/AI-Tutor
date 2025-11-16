@@ -262,6 +262,34 @@ router.put('/change-password', [
   }
 });
 
+// @route   POST /api/users/activity
+// @desc    Update user activity timestamp
+// @access  Private
+router.post('/activity', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    await user.updateActivity();
+
+    res.json({
+      success: true,
+      message: 'Activity updated',
+    });
+  } catch (error) {
+    console.error('Update activity error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
+  }
+});
+
 // @route   DELETE /api/users/account
 // @desc    Deactivate user account
 // @access  Private
@@ -355,6 +383,92 @@ router.get('/stats', [auth, authorize('admin')], async (req, res) => {
     });
   } catch (error) {
     console.error('Get user stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
+  }
+});
+
+// @route   GET /api/users/online
+// @desc    Get online users (Admin only)
+// @access  Private/Admin
+router.get('/online', [auth, authorize('admin')], async (req, res) => {
+  try {
+    const onlineUsers = await User.getOnlineUsers();
+    
+    res.json({
+      success: true,
+      data: { 
+        users: onlineUsers,
+        count: onlineUsers.length 
+      },
+    });
+  } catch (error) {
+    console.error('Get online users error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
+  }
+});
+
+// @route   GET /api/users/sessions
+// @desc    Get active sessions (Admin only)
+// @access  Private/Admin
+router.get('/sessions', [auth, authorize('admin')], async (req, res) => {
+  try {
+    const onlineUsers = await User.find({ isOnline: true })
+      .select('firstName lastName email lastLogin lastActivity role')
+      .sort({ lastActivity: -1 });
+
+    const sessions = onlineUsers.map(user => ({
+      id: user._id,
+      name: `${user.firstName} ${user.lastName}`,
+      email: user.email,
+      role: user.role,
+      loginTime: user.lastLogin,
+      lastActivity: user.lastActivity,
+      isOnline: user.isOnline
+    }));
+    
+    res.json({
+      success: true,
+      data: { 
+        sessions,
+        count: sessions.length 
+      },
+    });
+  } catch (error) {
+    console.error('Get active sessions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+    });
+  }
+});
+
+// @route   POST /api/users/:id/force-logout
+// @desc    Force logout user (Admin only)
+// @access  Private/Admin
+router.post('/:id/force-logout', [auth, authorize('admin')], async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    await user.setOffline();
+
+    res.json({
+      success: true,
+      message: `User ${user.firstName} ${user.lastName} has been logged out`,
+    });
+  } catch (error) {
+    console.error('Force logout error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error',

@@ -2,8 +2,8 @@ const mongoose = require('mongoose');
 
 const connectDB = async () => {
   try {
-    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/ai_tutor_db';
-    
+    const mongoURI = process.env.MONGODB_URI || 'mongodb://localhost:27017/bytebrain_db';
+
     const conn = await mongoose.connect(mongoURI, {
       // Mongoose 6+ doesn't need these options, but keeping for compatibility
       // useNewUrlParser: true,
@@ -11,7 +11,7 @@ const connectDB = async () => {
     });
 
     console.log(`🗄️  MongoDB Connected: ${conn.connection.host}`);
-    
+
     // Handle connection events
     mongoose.connection.on('error', (err) => {
       console.error('❌ MongoDB connection error:', err);

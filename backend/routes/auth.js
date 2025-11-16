@@ -150,13 +150,12 @@ router.post('/login', [
       });
     }
 
-    // Update last login
-    user.lastLogin = new Date();
-    await user.save();
-
     // Generate tokens
     const token = generateToken(user.id);
     const refreshToken = generateRefreshToken(user.id);
+
+    // Set user online and update login info
+    await user.setOnline(token);
 
     res.json({
       success: true,
@@ -427,13 +426,27 @@ router.get('/me', auth, async (req, res) => {
 });
 
 // @route   POST /api/auth/logout
-// @desc    Logout user (client-side token removal)
+// @desc    Logout user and set offline
 // @access  Private
-router.post('/logout', auth, (req, res) => {
-  res.json({
-    success: true,
-    message: 'Logged out successfully',
-  });
+router.post('/logout', auth, async (req, res) => {
+  try {
+    // Find user and set offline
+    const user = await User.findById(req.user.id);
+    if (user) {
+      await user.setOffline();
+    }
+
+    res.json({
+      success: true,
+      message: 'Logged out successfully',
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.json({
+      success: true,
+      message: 'Logged out successfully', // Still return success even if DB update fails
+    });
+  }
 });
 
 module.exports = router;

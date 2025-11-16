@@ -52,6 +52,22 @@ const userSchema = new mongoose.Schema({
   lastLogin: {
     type: Date,
   },
+  lastActivity: {
+    type: Date,
+    default: Date.now,
+  },
+  isOnline: {
+    type: Boolean,
+    default: false,
+  },
+  sessionToken: {
+    type: String,
+    select: false,
+  },
+  fcmToken: {
+    type: String,
+    select: false,
+  },
   isActive: {
     type: Boolean,
     default: true,
@@ -167,8 +183,7 @@ const userSchema = new mongoose.Schema({
   toObject: { virtuals: true },
 });
 
-// Indexes for better performance
-userSchema.index({ email: 1 });
+// Indexes for better performance (email index is already created by unique: true)
 userSchema.index({ role: 1 });
 userSchema.index({ isActive: 1 });
 userSchema.index({ emailVerificationToken: 1 });
@@ -208,9 +223,9 @@ userSchema.pre('save', async function(next) {
   }
 });
 
-// Update login count and last login
+// Update login count and last login (only if not already handled by setOnline)
 userSchema.pre('save', function(next) {
-  if (this.isModified('lastLogin')) {
+  if (this.isModified('lastLogin') && !this.isModified('loginCount')) {
     this.loginCount += 1;
   }
   next();
@@ -219,6 +234,29 @@ userSchema.pre('save', function(next) {
 // Instance method to check password
 userSchema.methods.comparePassword = async function(candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
+};
+
+// Instance method to set user online
+userSchema.methods.setOnline = async function(sessionToken) {
+  this.isOnline = true;
+  this.lastActivity = new Date();
+  this.lastLogin = new Date();
+  this.sessionToken = sessionToken;
+  this.loginCount += 1; // Increment directly to avoid pre-save hook recursion
+  return this.save();
+};
+
+// Instance method to set user offline
+userSchema.methods.setOffline = function() {
+  this.isOnline = false;
+  this.sessionToken = null;
+  return this.save();
+};
+
+// Instance method to update activity
+userSchema.methods.updateActivity = function() {
+  this.lastActivity = new Date();
+  return this.save();
 };
 
 // Instance method to get public profile
@@ -249,6 +287,42 @@ userSchema.statics.findActive = function() {
   return this.find({ isActive: true });
 };
 
+// Static method to get online users count
+userSchema.statics.getOnlineUsersCount = function() {
+  return this.countDocuments({ isOnline: true });
+};
+
+// Static method to get recently active users (last 5 minutes)
+userSchema.statics.getRecentlyActiveCount = function() {
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+  return this.countDocuments({ 
+    lastActivity: { $gte: fiveMinutesAgo }
+  });
+};
+
+// Static method to get online users list
+userSchema.statics.getOnlineUsers = function() {
+  return this.find({ isOnline: true })
+    .select('firstName lastName email lastActivity role')
+    .sort({ lastActivity: -1 });
+};
+
+// Static method to cleanup offline users (users inactive for more than 30 minutes)
+userSchema.statics.cleanupOfflineUsers = async function() {
+  const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000);
+  const result = await this.updateMany(
+    { 
+      isOnline: true,
+      lastActivity: { $lt: thirtyMinutesAgo }
+    },
+    { 
+      $set: { isOnline: false },
+      $unset: { sessionToken: 1 }
+    }
+  );
+  return result.modifiedCount;
+};
+
 // Static method to get user stats
 userSchema.statics.getUserStats = async function() {
   const stats = await this.aggregate([
@@ -257,6 +331,7 @@ userSchema.statics.getUserStats = async function() {
         _id: null,
         totalUsers: { $sum: 1 },
         activeUsers: { $sum: { $cond: ['$isActive', 1, 0] } },
+        onlineUsers: { $sum: { $cond: ['$isOnline', 1, 0] } },
         verifiedUsers: { $sum: { $cond: ['$isEmailVerified', 1, 0] } },
         studentCount: { $sum: { $cond: [{ $eq: ['$role', 'student'] }, 1, 0] } },
         teacherCount: { $sum: { $cond: [{ $eq: ['$role', 'teacher'] }, 1, 0] } },

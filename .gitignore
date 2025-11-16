@@ -124,3 +124,5 @@ chatbot_submission/
 **/node_modules/
 node_modules
 Byte_Brain/node_modules
+# Do not commit service account keys or other credentials
+backend/config/firebase-service-account.json

@@ -3,7 +3,10 @@ import 'package:http/http.dart' as http;
 import 'auth_backend_service.dart';
 
 class AnalyticsService {
-  static const String baseUrl = 'http://10.0.2.2:3000/api/analytics';
+  static Future<String> _baseUrl() async {
+    final base = await AuthBackendService.getBaseUrl();
+    return '$base/analytics';
+  }
 
   // Get online users count
   static Future<Map<String, dynamic>> getOnlineUsersCount() async {
@@ -16,6 +19,7 @@ class AnalyticsService {
         };
       }
 
+      final baseUrl = await _baseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/online-users'),
         headers: {
@@ -44,6 +48,7 @@ class AnalyticsService {
         };
       }
 
+      final baseUrl = await _baseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/online-users/list'),
         headers: {
@@ -72,6 +77,7 @@ class AnalyticsService {
         };
       }
 
+      final baseUrl = await _baseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/user-stats'),
         headers: {
@@ -100,6 +106,7 @@ class AnalyticsService {
         };
       }
 
+      final baseUrl = await _baseUrl();
       final response = await http.put(
         Uri.parse('$baseUrl/activity'),
         headers: {
@@ -128,6 +135,7 @@ class AnalyticsService {
         };
       }
 
+      final baseUrl = await _baseUrl();
       final response = await http.post(
         Uri.parse('$baseUrl/cleanup-offline'),
         headers: {

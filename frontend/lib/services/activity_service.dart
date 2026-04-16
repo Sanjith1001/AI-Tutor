@@ -264,22 +264,95 @@ class ActivityService {
 
   // Get user statistics
   static Future<Map<String, dynamic>> getStats() async {
-    final prefs = await SharedPreferences.getInstance();
-    final statsJson = prefs.getString(_statsKey);
+    try {
+      // Check if user is logged in
+      final isLoggedIn = await AuthBackendService.isLoggedIn();
+      if (!isLoggedIn) {
+        // Return cached stats if not logged in
+        final prefs = await SharedPreferences.getInstance();
+        final statsJson = prefs.getString(_statsKey);
+        if (statsJson != null) {
+          return jsonDecode(statsJson);
+        }
+        return {
+          'coursesCompleted': 0,
+          'quizzesTaken': 0,
+          'modulesCompleted': 0,
+          'totalScore': 0,
+          'totalQuizzes': 0,
+          'assessmentsTaken': 0,
+          'averageScore': 0.0,
+        };
+      }
 
-    if (statsJson != null) {
-      return jsonDecode(statsJson);
+      // Fetch fresh stats from backend
+      final baseUrl = await AuthBackendService.getBaseUrl();
+      final headers = await AuthBackendService.getHeaders();
+
+      print('📊 [ActivityService] Fetching stats from backend...');
+      
+      final response = await http.get(
+        Uri.parse('$baseUrl/activities/stats'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final body = json.decode(response.body) as Map<String, dynamic>;
+        if (body['success'] == true && body['data'] != null) {
+          final statsData = body['data']['stats'] != null
+              ? Map<String, dynamic>.from(body['data']['stats'])
+              : <String, dynamic>{};
+          
+          print('✅ [ActivityService] Stats fetched: $statsData');
+          
+          // Store in local cache for fallback
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(_statsKey, json.encode(statsData));
+          
+          return statsData;
+        }
+      }
+
+      print('⚠️ [ActivityService] Failed to fetch stats, using cache');
+      
+      // Fallback to cached stats
+      final prefs = await SharedPreferences.getInstance();
+      final statsJson = prefs.getString(_statsKey);
+      if (statsJson != null) {
+        return jsonDecode(statsJson);
+      }
+      
+      return {
+        'coursesCompleted': 0,
+        'quizzesTaken': 0,
+        'modulesCompleted': 0,
+        'totalScore': 0,
+        'totalQuizzes': 0,
+        'assessmentsTaken': 0,
+        'averageScore': 0.0,
+      };
+    } catch (e) {
+      print('❌ [ActivityService] Error fetching stats: $e');
+      
+      // Fallback to cached stats on error
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final statsJson = prefs.getString(_statsKey);
+        if (statsJson != null) {
+          return jsonDecode(statsJson);
+        }
+      } catch (_) {}
+      
+      return {
+        'coursesCompleted': 0,
+        'quizzesTaken': 0,
+        'modulesCompleted': 0,
+        'totalScore': 0,
+        'totalQuizzes': 0,
+        'assessmentsTaken': 0,
+        'averageScore': 0.0,
+      };
     }
-
-    // Return default stats
-    return {
-      'coursesCompleted': 0,
-      'quizzesTaken': 0,
-      'modulesCompleted': 0,
-      'totalScore': 0,
-      'totalQuizzes': 0,
-      'assessmentsTaken': 0,
-    };
   }
 
   // Calculate average score
@@ -441,5 +514,39 @@ class ActivityService {
     await prefs.remove(_learningStyleKey);
     await prefs.remove(_skillLevelKey);
     await prefs.remove('last_user_id');
+  }
+
+  // Mark a module as completed and record it in the database
+  static Future<void> markModuleComplete({
+    required String moduleTitle,
+    required String courseTitle,
+    String? learningStyle,
+  }) async {
+    print('📝 [Activity] Marking module complete: $moduleTitle');
+    
+    try {
+      // Record the completion in the backend
+      await addActivity(
+        type: activityModule,
+        title: 'Completed $moduleTitle',
+        description: 'Successfully finished learning module: $moduleTitle',
+        metadata: {
+          'moduleTitle': moduleTitle,
+          'courseTitle': courseTitle,
+          'learningStyle': learningStyle,
+        },
+        completed: true, // Mark as completed
+      );
+
+      // Clear cached stats so fresh data is fetched from backend
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_statsKey);
+      
+      print('✅ [Activity] Module marked as complete: $moduleTitle');
+      print('✅ [Activity] Cleared stats cache to force refresh');
+    } catch (e) {
+      print('❌ [Activity] Error marking module complete: $e');
+      rethrow;
+    }
   }
 }

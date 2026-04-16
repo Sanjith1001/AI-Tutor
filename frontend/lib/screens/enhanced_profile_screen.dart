@@ -113,7 +113,7 @@ class _EnhancedProfileScreenState extends State<EnhancedProfileScreen> {
     int totalFields = 8;
 
     // Personal Info (4 fields)
-    if (_userData['full_name']?.isNotEmpty == true) completedFields++;
+    if ((_userData['name'] ?? _userData['full_name'])?.isNotEmpty == true) completedFields++;
     if (_userData['bio']?.isNotEmpty == true) completedFields++;
     if (_userData['selected_avatar']?.isNotEmpty == true) completedFields++;
     if (_userData['email']?.isNotEmpty == true) completedFields++;
@@ -355,7 +355,7 @@ class _EnhancedProfileScreenState extends State<EnhancedProfileScreen> {
 
           // Name
           Text(
-            _userData['full_name'] ?? 'Unknown User',
+            _userData['name'] ?? _userData['full_name'] ?? 'Unknown User',
             style: const TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.bold,
@@ -484,10 +484,11 @@ class _EnhancedProfileScreenState extends State<EnhancedProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildEditableField('Name', _userData['full_name'] ?? '', () {
-          _showEditDialog('Name', _userData['full_name'] ?? '', (value) {
+        _buildEditableField('Name', _userData['name'] ?? _userData['full_name'] ?? '', () {
+          _showEditDialog('Name', _userData['name'] ?? _userData['full_name'] ?? '', (value) {
             setState(() {
-              _userData['full_name'] = value;
+              _userData['name'] = value;
+              _userData['full_name'] = value; // Keep both for compatibility
               _profileCompletion = _calculateProfileCompletion();
             });
           });

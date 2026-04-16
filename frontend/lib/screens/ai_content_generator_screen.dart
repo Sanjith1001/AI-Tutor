@@ -120,7 +120,7 @@ class _AIContentGeneratorScreenState extends State<AIContentGeneratorScreen> {
       backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
         title: const Text('AI Content Generator'),
-        backgroundColor: Colors.blue.shade600,
+        backgroundColor: Colors.blue.shade800,
         foregroundColor: Colors.white,
         elevation: 0,
       ),

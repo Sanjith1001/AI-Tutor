@@ -24,7 +24,7 @@ class CourseScreen extends StatelessWidget {
       backgroundColor: Colors.blue.shade100,
       appBar: AppBar(
         title: Text(title),
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.blue.shade800,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),

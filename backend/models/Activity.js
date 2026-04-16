@@ -86,6 +86,15 @@ activitySchema.statics.getUserStats = async function(userId) {
             ] 
           } 
         },
+        modulesCompleted: { 
+          $sum: { 
+            $cond: [
+              { $and: [{ $eq: ['$type', 'module'] }, { $eq: ['$completed', true] }] }, 
+              1, 
+              0
+            ] 
+          } 
+        },
         quizzesTaken: { 
           $sum: { $cond: [{ $eq: ['$type', 'quiz'] }, 1, 0] } 
         },
@@ -93,6 +102,16 @@ activitySchema.statics.getUserStats = async function(userId) {
           $sum: { $cond: [{ $eq: ['$type', 'assessment'] }, 1, 0] } 
         },
         averageScore: { $avg: '$score' },
+        totalScore: { $sum: { $cond: ['$score', '$score', 0] } },
+        totalQuizzes: { 
+          $sum: { 
+            $cond: [
+              { $and: [{ $ne: ['$score', null] }, { $gt: ['$score', 0] }] }, 
+              1, 
+              0
+            ] 
+          } 
+        },
         lastActivity: { $max: '$createdAt' },
       }
     }
@@ -101,9 +120,12 @@ activitySchema.statics.getUserStats = async function(userId) {
   return stats[0] || {
     totalActivities: 0,
     coursesCompleted: 0,
+    modulesCompleted: 0,
     quizzesTaken: 0,
     assessmentsTaken: 0,
     averageScore: 0,
+    totalScore: 0,
+    totalQuizzes: 0,
     lastActivity: null,
   };
 };

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'enhanced_home_screen.dart';
+import 'register_screen.dart';
 import '../services/auth_backend_service.dart';
 import '../services/activity_service.dart';
 import '../themes/index.dart';
@@ -299,12 +300,10 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                           ),
                           TextButton(
                             onPressed: () {
-                              // TODO: Implement registration screen
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content:
-                                      Text('Registration feature coming soon!'),
-                                  backgroundColor: Colors.orange,
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const RegisterScreen(),
                                 ),
                               );
                             },
@@ -321,6 +320,38 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    // Use Test Account button (fills fields and logs in)
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: OutlinedButton(
+                        onPressed: _loading
+                            ? null
+                            : () async {
+                                setState(() {
+                                  _emailController.text = 'student@aitutor.com';
+                                  _passwordController.text = 'student123';
+                                });
+                                await Future.delayed(const Duration(milliseconds: 100));
+                                if (!_loading) await _login();
+                              },
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: AppColors.primary),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          'Use Test Account',
+                          style: AppTypography.bodyMedium.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 20),

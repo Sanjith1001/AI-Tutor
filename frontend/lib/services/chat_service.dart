@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import 'auth_backend_service.dart';
 
@@ -11,6 +12,21 @@ class ChatService {
   static Function(Map<String, dynamic>)? _onTyping;
   static Function(Map<String, dynamic>)? _onStudySession;
 
+  static Future<String> _resolveSocketUrl() async {
+    final envSocket = dotenv.env['SOCKET_URL'];
+    if (envSocket != null && envSocket.isNotEmpty) {
+      return envSocket;
+    }
+
+    final envApi = AuthBackendService.envBaseUrl;
+    if (envApi != null) {
+      return envApi.replaceFirst(RegExp(r'/api/?$'), '');
+    }
+
+    final base = await AuthBackendService.getBaseUrl();
+    return base.replaceFirst(RegExp(r'/api/?$'), '');
+  }
+
   // Initialize socket connection
   static Future<bool> connect() async {
     try {
@@ -21,9 +37,11 @@ class ChatService {
       }
 
       print('🔄 Attempting to connect to chat server...');
+      final socketUrl = await _resolveSocketUrl();
+      print('🌐 Chat socket URL: $socketUrl');
 
       _socket = IO.io(
-          'http://10.0.2.2:3000',
+          socketUrl,
           IO.OptionBuilder()
               .setTransports(['websocket'])
               .enableAutoConnect()

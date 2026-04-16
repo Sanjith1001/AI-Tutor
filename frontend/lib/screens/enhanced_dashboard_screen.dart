@@ -9,7 +9,8 @@ class EnhancedDashboardScreen extends StatefulWidget {
       _EnhancedDashboardScreenState();
 }
 
-class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen> {
+class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
+    with WidgetsBindingObserver {
   Map<String, dynamic> _stats = {};
   List<Map<String, dynamic>> _recentActivities = [];
   String? _learningStyle;
@@ -20,7 +21,23 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadDashboardData();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Refresh dashboard stats when app resumes
+    if (state == AppLifecycleState.resumed) {
+      print('📊 [Dashboard] App resumed, refreshing stats...');
+      _loadDashboardData();
+    }
   }
 
   Future<void> _loadDashboardData() async {
@@ -28,12 +45,14 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen> {
       // Check if user has changed and refresh data if needed
       final needsRefresh = await ActivityService.needsRefresh();
       if (needsRefresh) {
-        print('User changed, refreshing activities...');
+        print('📊 [Dashboard] User changed, refreshing activities...');
       }
+
+      print('📊 [Dashboard] Loading dashboard data...');
 
       // Load data with individual error handling
       final stats = await ActivityService.getStats().catchError((e) {
-        print('Error loading stats: $e');
+        print('❌ [Dashboard] Error loading stats: $e');
         return <String, dynamic>{
           'coursesCompleted': 0,
           'quizzesTaken': 0,
@@ -41,31 +60,35 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen> {
           'totalScore': 0,
           'totalQuizzes': 0,
           'assessmentsTaken': 0,
+          'averageScore': 0.0,
         };
       });
 
+      print('✅ [Dashboard] Stats loaded: $stats');
+
       final activities =
           await ActivityService.getRecentActivities(limit: 10).catchError((e) {
-        print('Error loading activities: $e');
+        print('❌ [Dashboard] Error loading activities: $e');
         return <Map<String, dynamic>>[];
       });
 
+      print('✅ [Dashboard] Activities loaded: ${activities.length} items');
+
       final learningStyle =
           await ActivityService.getLearningStyle().catchError((e) {
-        print('Error loading learning style: $e');
+        print('❌ [Dashboard] Error loading learning style: $e');
         return null;
       });
 
       final skillLevel = await ActivityService.getSkillLevel().catchError((e) {
-        print('Error loading skill level: $e');
+        print('❌ [Dashboard] Error loading skill level: $e');
         return null;
       });
 
-      final averageScore =
-          await ActivityService.getAverageScore().catchError((e) {
-        print('Error loading average score: $e');
-        return 0.0;
-      });
+      final statsAverage = stats['averageScore'];
+      final averageScore = statsAverage is num ? statsAverage.toDouble() : 0.0;
+
+      print('📊 [Dashboard] Average score: $averageScore');
 
       if (mounted) {
         setState(() {
@@ -78,7 +101,7 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen> {
         });
       }
     } catch (e) {
-      print('Error loading dashboard data: $e');
+      print('❌ [Dashboard] Error loading dashboard data: $e');
       if (mounted) {
         setState(() {
           _stats = {
@@ -109,6 +132,11 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen> {
         ),
       );
     }
+
+    final dynamic testsTakenRaw =
+        _stats['assessmentsTaken'] ?? _stats['quizzesTaken'] ?? 0;
+    final int testsTaken =
+        testsTakenRaw is num ? testsTakenRaw.toInt() : int.tryParse('$testsTakenRaw') ?? 0;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -155,8 +183,8 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen> {
                         ),
                         _buildStatCard(
                           icon: Icons.quiz,
-                          title: 'Quizzes\nTaken',
-                          value: '${_stats['quizzesTaken'] ?? 0}',
+                          title: 'Tests\nTaken',
+                          value: '$testsTaken',
                           color: Colors.blue,
                         ),
                         _buildStatCard(
@@ -166,10 +194,10 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen> {
                           color: Colors.orange,
                         ),
                         _buildStatCard(
-                          icon: Icons.access_time,
-                          title: 'Study\nTime',
-                          value: '${(_stats['totalStudyTime'] ?? 0)}h',
-                          color: Colors.purple,
+                          icon: Icons.book_outlined,
+                          title: 'Modules\nCompleted',
+                          value: '${_stats['modulesCompleted'] ?? 0}',
+                          color: Colors.indigo,
                         ),
                       ],
                     ),

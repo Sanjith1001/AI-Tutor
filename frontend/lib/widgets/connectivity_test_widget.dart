@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
@@ -12,13 +13,27 @@ class ConnectivityTestWidget extends StatefulWidget {
 class _ConnectivityTestWidgetState extends State<ConnectivityTestWidget> {
   List<Map<String, dynamic>> testResults = [];
   bool isLoading = false;
+  late final List<String> testUrls;
 
-  final List<String> testUrls = [
-    'http://10.0.2.2:3000', // Android Emulator
-    'http://localhost:3000', // iOS Simulator / Desktop
-    'http://127.0.0.1:3000', // Alternative localhost
-    'http://192.168.1.100:3000', // Replace with your computer's IP
-  ];
+  @override
+  void initState() {
+    super.initState();
+    final urls = <String>{};
+    final envUrl = _normalizeBase(dotenv.env['API_URL']);
+    if (envUrl != null) urls.add(envUrl);
+    urls.addAll([
+      'http://10.0.2.2:3000', // Android Emulator
+      'http://localhost:3000', // Desktop
+      'http://127.0.0.1:3000',
+      'http://192.168.1.100:3000',
+    ]);
+    testUrls = urls.toList();
+  }
+
+  String? _normalizeBase(String? raw) {
+    if (raw == null || raw.isEmpty) return null;
+    return raw.replaceFirst(RegExp(r'/api/?$'), '');
+  }
 
   @override
   Widget build(BuildContext context) {

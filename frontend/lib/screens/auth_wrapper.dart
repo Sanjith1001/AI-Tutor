@@ -41,31 +41,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text(
-                'Loading...',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    if (!_isLoggedIn) {
-      return const ByteBrainLoginScreen();
-    }
-
-    return const EnhancedHomeScreen(); // All users go to home screen
+    // Bypass authentication and open home screen directly (temporary)
+    return const EnhancedHomeScreen();
   }
 }

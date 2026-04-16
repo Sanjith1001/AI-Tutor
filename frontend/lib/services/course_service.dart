@@ -3,7 +3,10 @@ import 'package:http/http.dart' as http;
 import 'auth_backend_service.dart';
 
 class CourseService {
-  static const String baseUrl = 'http://localhost:3000/api/courses';
+  static Future<String> _baseUrl() async {
+    final base = await AuthBackendService.getBaseUrl();
+    return '$base/courses';
+  }
 
   // Get all courses with filtering
   static Future<Map<String, dynamic>> getCourses({
@@ -16,6 +19,7 @@ class CourseService {
     bool? isFree,
   }) async {
     try {
+      final baseUrl = await _baseUrl();
       final queryParams = <String, String>{
         'page': page.toString(),
         'limit': limit.toString(),
@@ -42,6 +46,7 @@ class CourseService {
   // Get course categories
   static Future<Map<String, dynamic>> getCategories() async {
     try {
+      final baseUrl = await _baseUrl();
       final response = await http.get(Uri.parse('$baseUrl/categories'));
       return json.decode(response.body);
     } catch (e) {
@@ -55,6 +60,7 @@ class CourseService {
   // Get popular courses
   static Future<Map<String, dynamic>> getPopularCourses({int limit = 6}) async {
     try {
+      final baseUrl = await _baseUrl();
       final uri = Uri.parse('$baseUrl/popular').replace(
         queryParameters: {'limit': limit.toString()},
       );
@@ -79,6 +85,7 @@ class CourseService {
         };
       }
 
+      final baseUrl = await _baseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/recommended'),
         headers: {
@@ -108,6 +115,7 @@ class CourseService {
         headers['Authorization'] = 'Bearer $token';
       }
 
+      final baseUrl = await _baseUrl();
       final response = await http.get(
         Uri.parse('$baseUrl/$courseId'),
         headers: headers,
@@ -133,6 +141,7 @@ class CourseService {
         };
       }
 
+      final baseUrl = await _baseUrl();
       final response = await http.post(
         Uri.parse('$baseUrl/$courseId/enroll'),
         headers: {
@@ -161,6 +170,7 @@ class CourseService {
         };
       }
 
+      final baseUrl = await _baseUrl();
       final response = await http.post(
         Uri.parse('$baseUrl/$courseId/unenroll'),
         headers: {
@@ -194,6 +204,7 @@ class CourseService {
       final body = <String, dynamic>{};
       if (score != null) body['score'] = score;
 
+      final baseUrl = await _baseUrl();
       final response = await http.post(
         Uri.parse('$baseUrl/$courseId/modules/$moduleId/complete'),
         headers: {
@@ -229,6 +240,7 @@ class CourseService {
         if (review != null && review.isNotEmpty) 'review': review,
       };
 
+      final baseUrl = await _baseUrl();
       final response = await http.post(
         Uri.parse('$baseUrl/$courseId/rate'),
         headers: {
@@ -259,6 +271,7 @@ class CourseService {
         };
       }
 
+      final baseUrl = await _baseUrl();
       final response = await http.post(
         Uri.parse(baseUrl),
         headers: {
@@ -289,6 +302,7 @@ class CourseService {
         };
       }
 
+      final baseUrl = await _baseUrl();
       final response = await http.put(
         Uri.parse('$baseUrl/$courseId'),
         headers: {
@@ -318,6 +332,7 @@ class CourseService {
         };
       }
 
+      final baseUrl = await _baseUrl();
       final response = await http.delete(
         Uri.parse('$baseUrl/$courseId'),
         headers: {

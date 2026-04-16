@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AuthBackendService {
   // Multiple URLs to try based on platform
@@ -11,15 +12,39 @@ class AuthBackendService {
     'http://192.168.1.100:3000/api', // Replace with your computer's IP
   ];
 
+  // If frontend .env defines API_URL, use that as highest priority.
+  static String? get envBaseUrl {
+    final raw = dotenv.env['API_URL'];
+    if (raw == null || raw.isEmpty) return null;
+    // Ensure it ends with /api
+    if (raw.endsWith('/api')) return raw;
+    if (raw.endsWith('/')) return raw + 'api';
+    return raw + '/api';
+  }
+
   static String? _workingBaseUrl;
   static const String _currentUserKey = 'current_user';
   static const String _authTokenKey = 'auth_token';
   static const String _refreshTokenKey = 'refresh_token';
+  static const String _localUsersKey = 'local_users';
 
   // Find working base URL
   static Future<String?> findWorkingBaseUrl() async {
     if (_workingBaseUrl != null) return _workingBaseUrl;
-
+    // If env provides a base URL, use it directly (no probing).
+    final fromEnv = envBaseUrl;
+    if (fromEnv != null) {
+      // quick health check
+      try {
+        final resp = await http.get(Uri.parse(fromEnv.replaceAll('/api', '/health'))).timeout(const Duration(seconds: 3));
+        if (resp.statusCode == 200) {
+          _workingBaseUrl = fromEnv;
+          return _workingBaseUrl;
+        }
+      } catch (_) {
+        // fallthrough to probing other URLs
+      }
+    }
     for (String url in baseUrls) {
       try {
         print('🔍 Testing connection to: $url');
@@ -100,50 +125,82 @@ class AuthBackendService {
           : 'User'; // Default last name if not provided
 
       final baseUrl = await getBaseUrl();
-      final response = await http.post(
-        Uri.parse('$baseUrl/auth/register'),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode({
-          'email': email,
-          'password': password,
-          'firstName': firstName,
-          'lastName': lastName,
-        }),
-      );
+      if (baseUrl != null) {
+        print('➡️ Register request -> ${baseUrl}/auth/register');
+        final response = await http.post(
+            Uri.parse('$baseUrl/auth/register'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({
+            'email': email,
+            'password': password,
+            'firstName': firstName,
+            'lastName': lastName,
+          }),
+        );
 
-      final data = json.decode(response.body);
+        final data = json.decode(response.body);
 
-      if (response.statusCode == 201 && data['success']) {
-        // Store tokens
-        if (data['data']['token'] != null) {
-          await storeToken(data['data']['token']);
-        }
-        if (data['data']['refreshToken'] != null) {
-          await storeRefreshToken(data['data']['refreshToken']);
-        }
-
-        // Store user data
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(
-            _currentUserKey, json.encode(data['data']['user']));
-
-        return {
-          'success': true,
-          'message': data['message'] ?? 'Account created successfully!',
-          'user': {
-            'id': data['data']['user']['_id'],
-            'email': data['data']['user']['email'],
-            'name':
-                '${data['data']['user']['firstName']} ${data['data']['user']['lastName']}',
-            'isAdmin': data['data']['user']['role'] == 'admin',
+        if (response.statusCode == 201 && data['success']) {
+          // Store tokens
+          if (data['data']['token'] != null) {
+            await storeToken(data['data']['token']);
           }
-        };
-      } else {
-        return {
-          'success': false,
-          'message': data['message'] ?? 'Registration failed'
-        };
+          if (data['data']['refreshToken'] != null) {
+            await storeRefreshToken(data['data']['refreshToken']);
+          }
+
+          // Store user data
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(
+              _currentUserKey, json.encode(data['data']['user']));
+
+          return {
+            'success': true,
+            'message': data['message'] ?? 'Account created successfully!',
+            'user': {
+              'id': data['data']['user']['_id'],
+              'email': data['data']['user']['email'],
+              'name':
+                  '${data['data']['user']['firstName']} ${data['data']['user']['lastName']}',
+              'isAdmin': data['data']['user']['role'] == 'admin',
+            }
+          };
+        } else {
+          return {
+            'success': false,
+            'message': data['message'] ?? 'Registration failed'
+          };
+        }
       }
+
+      // If no backend is reachable, store user locally for testing
+      await _ensureDefaultTestUser();
+      final localUser = {
+        '_id': 'local-${DateTime.now().millisecondsSinceEpoch}',
+        'email': email,
+        'firstName': firstName,
+        'lastName': lastName,
+        'role': 'student',
+        'password': password,
+        'isEmailVerified': true,
+      };
+      await _saveLocalUser(localUser);
+
+      // Store as current user
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_currentUserKey, json.encode(localUser));
+      await storeToken('local-token-${localUser['_id']}');
+
+      return {
+        'success': true,
+        'message': 'Registered locally (offline mode)',
+        'user': {
+          'id': localUser['_id'],
+          'email': localUser['email'],
+          'name': '${localUser['firstName']} ${localUser['lastName']}',
+          'isAdmin': false,
+        }
+      };
     } catch (e) {
       return {'success': false, 'message': 'Network error: $e'};
     }
@@ -156,51 +213,103 @@ class AuthBackendService {
   }) async {
     try {
       final baseUrl = await getBaseUrl();
-      print('🔐 Attempting login to: $baseUrl/auth/login');
+      if (baseUrl != null) {
+        print('🔐 Attempting login to: $baseUrl/auth/login');
 
-      final response = await http
-          .post(
-            Uri.parse('$baseUrl/auth/login'),
-            headers: {'Content-Type': 'application/json'},
-            body: json.encode({
-              'email': email,
-              'password': password,
-            }),
-          )
-          .timeout(const Duration(seconds: 10));
+        final response = await http
+            .post(
+              Uri.parse('$baseUrl/auth/login'),
+              headers: {'Content-Type': 'application/json'},
+              body: json.encode({
+                'email': email,
+                'password': password,
+              }),
+            )
+            .timeout(const Duration(seconds: 10));
 
-      final data = json.decode(response.body);
+        final data = json.decode(response.body);
 
-      if (response.statusCode == 200 && data['success']) {
-        // Store tokens
-        if (data['data']['token'] != null) {
-          await storeToken(data['data']['token']);
-        }
-        if (data['data']['refreshToken'] != null) {
-          await storeRefreshToken(data['data']['refreshToken']);
-        }
+        if (response.statusCode == 200 && data['success']) {
+          // Store tokens
+          if (data['data']['token'] != null) {
+            await storeToken(data['data']['token']);
+          }
+          if (data['data']['refreshToken'] != null) {
+            await storeRefreshToken(data['data']['refreshToken']);
+          }
 
-        // Store user data
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(
-            _currentUserKey, json.encode(data['data']['user']));
+          // Store user data
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(
+              _currentUserKey, json.encode(data['data']['user']));
 
-        return {
-          'success': true,
-          'message': data['message'] ?? 'Login successful!',
-          'user': {
-            'id': data['data']['user']['_id'],
-            'email': data['data']['user']['email'],
-            'name':
-                '${data['data']['user']['firstName']} ${data['data']['user']['lastName']}',
+          return {
+            'success': true,
+            'message': data['message'] ?? 'Login successful!',
+            'user': {
+              'id': data['data']['user']['_id'],
+              'email': data['data']['user']['email'],
+              'name':
+                  '${data['data']['user']['firstName']} ${data['data']['user']['lastName']}',
+              'isAdmin': data['data']['user']['role'] == 'admin',
+            },
             'isAdmin': data['data']['user']['role'] == 'admin',
-          },
-          'isAdmin': data['data']['user']['role'] == 'admin',
-        };
-      } else {
-        return {'success': false, 'message': data['message'] ?? 'Login failed'};
+          };
+        } else {
+          return {'success': false, 'message': data['message'] ?? 'Login failed'};
+        }
       }
+
+      // No backend reachable — try local users
+      await _ensureDefaultTestUser();
+      final local = await _getLocalUser(email);
+      if (local == null) {
+        return {'success': false, 'message': 'User not found (offline)'};
+      }
+
+      if (local['password'] != password) {
+        return {'success': false, 'message': 'Invalid credentials (offline)'};
+      }
+
+      // Store tokens and current user locally
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_currentUserKey, json.encode(local));
+      await storeToken('local-token-${local['_id']}');
+
+      return {
+        'success': true,
+        'message': 'Logged in (offline mode)',
+        'user': {
+          'id': local['_id'],
+          'email': local['email'],
+          'name': '${local['firstName']} ${local['lastName']}',
+          'isAdmin': local['role'] == 'admin',
+        },
+        'isAdmin': local['role'] == 'admin',
+      };
     } catch (e) {
+      // On unexpected network errors, attempt local fallback
+      try {
+        await _ensureDefaultTestUser();
+        final local = await _getLocalUser(email);
+        if (local != null && local['password'] == password) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString(_currentUserKey, json.encode(local));
+          await storeToken('local-token-${local['_id']}');
+          return {
+            'success': true,
+            'message': 'Logged in (offline mode)',
+            'user': {
+              'id': local['_id'],
+              'email': local['email'],
+              'name': '${local['firstName']} ${local['lastName']}',
+              'isAdmin': local['role'] == 'admin',
+            },
+            'isAdmin': local['role'] == 'admin',
+          };
+        }
+      } catch (_) {}
+
       return {'success': false, 'message': 'Network error: $e'};
     }
   }
@@ -285,6 +394,53 @@ class AuthBackendService {
     }
 
     return null;
+  }
+
+  // ------------------ Local users (offline/testing) ------------------
+  static Future<Map<String, dynamic>?> _getLocalUser(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString(_localUsersKey);
+    if (jsonStr == null) return null;
+    try {
+      final Map users = json.decode(jsonStr);
+      final user = users[email.toLowerCase()];
+      if (user == null) return null;
+      return Map<String, dynamic>.from(user);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  static Future<void> _saveLocalUser(Map<String, dynamic> user) async {
+    final prefs = await SharedPreferences.getInstance();
+    final jsonStr = prefs.getString(_localUsersKey);
+    Map users = {};
+    if (jsonStr != null) {
+      try {
+        users = json.decode(jsonStr);
+      } catch (e) {
+        users = {};
+      }
+    }
+    users[user['email'].toLowerCase()] = user;
+    await prefs.setString(_localUsersKey, json.encode(users));
+  }
+
+  static Future<void> _ensureDefaultTestUser() async {
+    final existing = await _getLocalUser('student@aitutor.com');
+    if (existing == null) {
+      await _saveLocalUser({
+        '_id': 'local-student-1',
+        'email': 'student@aitutor.com',
+        'firstName': 'Student',
+        'lastName': 'User',
+        'role': 'student',
+        'password': 'student123',
+        'learningStyle': {'visual': 25, 'auditory': 25, 'reading': 25, 'kinesthetic': 25},
+        'preferences': {},
+        'isEmailVerified': true,
+      });
+    }
   }
 
   // Change password

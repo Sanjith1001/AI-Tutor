@@ -28,14 +28,10 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-// CORS Configuration
+// CORS Configuration - allow all origins
+// NOTE: This allows requests from any origin. Remove or tighten for production.
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || 'http://localhost:3000',
-    process.env.FLUTTER_APP_URL || 'http://localhost:8080',
-    'http://localhost:3000', // React/Vue dev server
-    'http://127.0.0.1:3000',
-  ],
+  origin: true,
   credentials: true,
 }));
 

@@ -5,9 +5,11 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 from datetime import datetime
 import logging
+from pathlib import Path
 
-# Load env variables
-load_dotenv()
+# Load env variables from parent directory (backend/.env)
+env_path = Path(__file__).parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 api_key = os.getenv("GROQ_API_KEY")
 
 # Flask app

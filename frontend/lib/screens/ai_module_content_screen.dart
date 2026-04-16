@@ -590,6 +590,7 @@ class _AIModuleContentScreenState extends State<AIModuleContentScreen>
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -622,7 +623,100 @@ class _AIModuleContentScreenState extends State<AIModuleContentScreen>
           _buildAudioTab(),
         ],
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _markModuleComplete,
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
+        icon: const Icon(Icons.check_circle),
+        label: const Text('Mark Complete'),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
     );
+  }
+
+  Future<void> _markModuleComplete() async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Mark Module as Complete?'),
+        content: Text(
+          'You are about to mark "${widget.moduleTitle}" as completed. This will be recorded in your learning progress.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.green),
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    // Show loading dialog
+    if (mounted) {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Recording module completion...'),
+            ],
+          ),
+        ),
+      );
+    }
+
+    try {
+      // Mark module as completed
+      await ActivityService.markModuleComplete(
+        moduleTitle: widget.moduleTitle,
+        courseTitle: widget.courseTitle ?? 'Unknown Course',
+        learningStyle: widget.learningStyle,
+      );
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✅ "${widget.moduleTitle}" marked as completed!'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+
+        // Wait a bit for backend to process, then navigate back
+        await Future.delayed(const Duration(seconds: 1));
+        
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('❌ Error marking module complete: $e'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildContentTab(String contentType) {

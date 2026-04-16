@@ -26,13 +26,13 @@ router.get('/dashboard', [auth, authorize('admin')], async (req, res) => {
     const recentUsers = await User.find()
       .sort({ createdAt: -1 })
       .limit(5)
-      .select('firstName lastName email createdAt lastLoginAt');
+      .select('fullName email createdAt lastLoginAt');
 
     const recentCourses = await Course.find()
       .sort({ createdAt: -1 })
       .limit(5)
       .select('title category createdAt isPublished enrollmentCount')
-      .populate('createdBy', 'firstName lastName');
+      .populate('createdBy', 'fullName');
 
     res.json({
       success: true,
@@ -86,8 +86,7 @@ router.get('/users', [
     
     if (search) {
       query.$or = [
-        { firstName: { $regex: search, $options: 'i' } },
-        { lastName: { $regex: search, $options: 'i' } },
+        { fullName: { $regex: search, $options: 'i' } },
         { email: { $regex: search, $options: 'i' } }
       ];
     }
@@ -138,8 +137,7 @@ router.get('/users', [
 router.put('/users/:id', [
   auth,
   authorize('admin'),
-  body('firstName').optional().trim().isLength({ min: 1 }).withMessage('First name is required'),
-  body('lastName').optional().trim().isLength({ min: 1 }).withMessage('Last name is required'),
+  body('fullName').optional().trim().isLength({ min: 1, max: 100 }).withMessage('Full name is required'),
   body('email').optional().isEmail().withMessage('Valid email is required'),
   body('role').optional().isIn(['student', 'teacher', 'admin']).withMessage('Invalid role')
 ], async (req, res) => {
@@ -274,7 +272,7 @@ router.get('/courses', [
     if (status === 'archived') query.isActive = false;
 
     const courses = await Course.find(query)
-      .populate('createdBy', 'firstName lastName email')
+      .populate('createdBy', 'fullName email')
       .sort({ createdAt: -1 })
       .limit(parseInt(limit))
       .skip((parseInt(page) - 1) * parseInt(limit));

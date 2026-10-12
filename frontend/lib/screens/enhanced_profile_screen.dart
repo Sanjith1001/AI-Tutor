@@ -129,35 +129,36 @@ class _EnhancedProfileScreenState extends State<EnhancedProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: Colors.white,
-        body: const Center(
-          child: CircularProgressIndicator(color: AppColors.primary),
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: Center(
+          child: CircularProgressIndicator(color: theme.colorScheme.primary),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: RefreshIndicator(
         onRefresh: _loadUserData,
-        color: AppColors.primary,
+        color: theme.colorScheme.primary,
         child: CustomScrollView(
           slivers: [
             // Collapsible App Bar
             SliverAppBar(
-              backgroundColor: Colors.white,
+              backgroundColor: theme.scaffoldBackgroundColor,
               elevation: 0,
               floating: true,
               pinned: false,
               snap: true,
               expandedHeight: 60,
-              title: const Text(
+              title: Text(
                 'Profile',
-                style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 24,
+                style: theme.textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -180,7 +181,7 @@ class _EnhancedProfileScreenState extends State<EnhancedProfileScreen> {
                   Container(
                     margin: const EdgeInsets.symmetric(horizontal: 20),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
+                      color: isDark ? AppColors.darkSurface : Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: SingleChildScrollView(
@@ -209,7 +210,7 @@ class _EnhancedProfileScreenState extends State<EnhancedProfileScreen> {
                                 style: TextStyle(
                                   color: isSelected
                                       ? Colors.white
-                                      : Colors.grey.shade700,
+                                      : (isDark ? AppColors.darkTextSecondary : Colors.grey.shade700),
                                   fontWeight: isSelected
                                       ? FontWeight.w600
                                       : FontWeight.normal,
@@ -300,12 +301,11 @@ class _EnhancedProfileScreenState extends State<EnhancedProfileScreen> {
   }
 
   Widget _buildSectionTitle(String title) {
+    final theme = Theme.of(context);
     return Text(
       title,
-      style: const TextStyle(
-        fontSize: 20,
+      style: theme.textTheme.titleLarge?.copyWith(
         fontWeight: FontWeight.bold,
-        color: Colors.black,
       ),
     );
   }
@@ -440,18 +440,19 @@ class _EnhancedProfileScreenState extends State<EnhancedProfileScreen> {
   }
 
   Widget _buildProfileCompletion() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Column(
       children: [
         Row(
           children: [
-            Icon(Icons.favorite, color: AppColors.primary, size: 20),
+            const Icon(Icons.favorite, color: AppColors.primary, size: 20),
             const SizedBox(width: 12),
             Text(
               'Profile Completion: ${_profileCompletion.round()}%',
-              style: const TextStyle(
-                fontSize: 16,
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: Colors.black,
               ),
             ),
           ],
@@ -462,7 +463,7 @@ class _EnhancedProfileScreenState extends State<EnhancedProfileScreen> {
         Container(
           height: 8,
           decoration: BoxDecoration(
-            color: Colors.grey.shade200,
+            color: isDark ? AppColors.darkSurfaceVariant : Colors.grey.shade200,
             borderRadius: BorderRadius.circular(4),
           ),
           child: FractionallySizedBox(
@@ -713,13 +714,64 @@ class _EnhancedProfileScreenState extends State<EnhancedProfileScreen> {
         _buildSettingCard('Notifications', Icons.notifications,
             () => _navigateToNotificationSettings()),
         const SizedBox(height: 12),
-        _buildSettingCard('Theme Settings', Icons.palette, () {}),
+        _buildSettingCard('Theme Settings', Icons.palette,
+            () => _showThemeSelectionDialog()),
         const SizedBox(height: 12),
         _buildSettingCard('Privacy Settings', Icons.privacy_tip,
             () => _navigateToPrivacySettings()),
         const SizedBox(height: 12),
         _buildSettingCard('Data Export', Icons.download, () {}),
       ],
+    );
+  }
+
+  void _showThemeSelectionDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Text(
+            'Select Theme Mode',
+            style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildThemeOptionTile(context, 'System Default', ThemeMode.system, Icons.brightness_auto),
+              _buildThemeOptionTile(context, 'Light Mode', ThemeMode.light, Icons.light_mode),
+              _buildThemeOptionTile(context, 'Dark Mode', ThemeMode.dark, Icons.dark_mode),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildThemeOptionTile(BuildContext context, String title, ThemeMode mode, IconData icon) {
+    final currentMode = ThemeManager().themeModeNotifier.value;
+    final isSelected = currentMode == mode;
+    
+    return ListTile(
+      leading: Icon(icon, color: isSelected ? AppColors.primary : null),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      trailing: isSelected ? const Icon(Icons.check, color: AppColors.primary) : null,
+      onTap: () {
+        ThemeManager().setThemeMode(mode);
+        Navigator.pop(context);
+      },
     );
   }
 

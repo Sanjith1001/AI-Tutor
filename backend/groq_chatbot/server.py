@@ -40,7 +40,7 @@ def health_check():
     return jsonify({
         "status": "healthy",
         "service": "ByteBrain Groq Chatbot",
-        "model": "llama-3.1-8b-instant",
+        "model": "groq/compound-mini",
         "groq_configured": api_key is not None,
         "timestamp": datetime.now().isoformat()
     })
@@ -95,7 +95,7 @@ Always aim to help students understand concepts rather than just providing answe
         messages.append({"role": "user", "content": user_input})
         
         response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
+            model="groq/compound-mini",
             messages=messages,
             max_tokens=400,
             temperature=0.7
@@ -119,7 +119,7 @@ Always aim to help students understand concepts rather than just providing answe
             "reply": reply,
             "suggestions": suggestions,
             "timestamp": datetime.now().isoformat(),
-            "model": "llama-3.1-8b-instant",
+            "model": "groq/compound-mini",
             "user_id": user_id
         })
         

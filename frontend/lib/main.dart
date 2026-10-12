@@ -9,6 +9,11 @@ import 'services/auth_backend_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+  
+  // Initialize ThemeManager to load persisted theme settings
+  final themeManager = ThemeManager();
+  await themeManager.init();
+  
   runApp(const MyApp());
 }
 
@@ -17,14 +22,21 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'ByteBrain',
-      theme: AppTheme.lightTheme,
-      home: const AuthWrapper(),
-      routes: {
-        '/login': (context) => const ByteBrainLoginScreen(),
-        '/home': (context) => const EnhancedHomeScreen(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeManager().themeModeNotifier,
+      builder: (context, themeMode, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'ByteBrain',
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: themeMode,
+          home: const AuthWrapper(),
+          routes: {
+            '/login': (context) => const ByteBrainLoginScreen(),
+            '/home': (context) => const EnhancedHomeScreen(),
+          },
+        );
       },
     );
   }
@@ -85,3 +97,4 @@ class _AuthWrapperState extends State<AuthWrapper> {
     return const ByteBrainLoginScreen();
   }
 }
+

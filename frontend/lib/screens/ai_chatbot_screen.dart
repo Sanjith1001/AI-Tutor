@@ -158,14 +158,17 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? (isDark ? AppColors.darkSurface : Colors.white),
         elevation: 0,
         automaticallyImplyLeading: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Row(
@@ -174,10 +177,10 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: AppColors.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
+              child: const Icon(
                 Icons.smart_toy,
                 color: AppColors.primary,
                 size: 24,
@@ -187,11 +190,9 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Nova AI',
-                  style: TextStyle(
-                    color: Colors.black,
-                    fontSize: 18,
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -213,7 +214,7 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
         actions: [
           IconButton(
             onPressed: _showChatOptions,
-            icon: const Icon(Icons.more_vert, color: Colors.black),
+            icon: Icon(Icons.more_vert, color: isDark ? Colors.white : Colors.black),
           ),
         ],
       ),
@@ -242,6 +243,9 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
   }
 
   Widget _buildMessageBubble(ChatMessage message) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -254,7 +258,7 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.1),
+                color: AppColors.primary.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -291,8 +295,8 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
                           _formatTime(message.timestamp),
                           style: TextStyle(
                             color: message.isUser
-                                ? Colors.white.withValues(alpha: 0.7)
-                                : Colors.grey.shade500,
+                                ? Colors.white.withOpacity(0.7)
+                                : (isDark ? AppColors.darkTextTertiary : Colors.grey.shade500),
                             fontSize: 11,
                           ),
                         ),
@@ -301,7 +305,7 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
                           Icon(
                             Icons.auto_awesome,
                             size: 10,
-                            color: Colors.grey.shade500,
+                            color: isDark ? AppColors.darkTextTertiary : Colors.grey.shade500,
                           ),
                         ],
                       ],
@@ -316,7 +320,7 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
             Container(
               width: 32,
               height: 32,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppColors.primary,
                 shape: BoxShape.circle,
               ),
@@ -333,6 +337,9 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
   }
 
   Widget _buildTypingIndicator() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -341,10 +348,10 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: AppColors.primary.withOpacity(0.1),
               shape: BoxShape.circle,
             ),
-            child: Icon(
+            child: const Icon(
               Icons.smart_toy,
               color: AppColors.primary,
               size: 18,
@@ -354,13 +361,13 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.cardColor,
               borderRadius: BorderRadius.circular(20).copyWith(
                 bottomLeft: const Radius.circular(4),
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
+                  color: Colors.black.withOpacity(isDark ? 0.25 : 0.05),
                   blurRadius: 5,
                   offset: const Offset(0, 2),
                 ),
@@ -389,7 +396,7 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
                               width: 6,
                               height: 6,
                               decoration: BoxDecoration(
-                                color: Colors.grey.shade400,
+                                color: isDark ? AppColors.darkTextTertiary : Colors.grey.shade400,
                                 shape: BoxShape.circle,
                               ),
                             ),
@@ -403,7 +410,7 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
                 Text(
                   'AI is typing...',
                   style: TextStyle(
-                    color: Colors.grey.shade600,
+                    color: isDark ? AppColors.darkTextSecondary : Colors.grey.shade600,
                     fontSize: 14,
                     fontStyle: FontStyle.italic,
                   ),
@@ -417,13 +424,16 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
   }
 
   Widget _buildMessageInput() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.darkSurface : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(isDark ? 0.35 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -445,7 +455,7 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
                 // Quick Actions Button
                 IconButton(
                   onPressed: _showQuickActions,
-                  icon: Icon(
+                  icon: const Icon(
                     Icons.add_circle_outline,
                     color: AppColors.primary,
                     size: 28,
@@ -456,7 +466,7 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
                 Expanded(
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
+                      color: isDark ? AppColors.darkSurfaceVariant : Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(25),
                     ),
                     child: TextField(
@@ -464,21 +474,22 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
                       focusNode: _focusNode,
                       maxLines: null,
                       minLines: 1,
+                      style: theme.textTheme.bodyMedium,
                       textCapitalization: TextCapitalization.sentences,
                       textInputAction: TextInputAction.send,
                       keyboardType: TextInputType.multiline,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         hintText: 'Ask Nova anything... (Press Enter to send)',
                         border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
+                        contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 12,
                         ),
+                        hintStyle: TextStyle(
+                          color: isDark ? AppColors.darkTextTertiary : Colors.grey.shade500,
+                        ),
                       ),
                       onSubmitted: (_) => _sendMessage(),
-                      onChanged: (text) {
-                        // Optional: You can add typing indicators here later
-                      },
                     ),
                   ),
                 ),
@@ -491,7 +502,7 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
                   child: Container(
                     width: 44,
                     height: 44,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: AppColors.primary,
                       shape: BoxShape.circle,
                     ),
@@ -511,13 +522,16 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
   }
 
   void _showQuickActions() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -527,15 +541,14 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.grey.shade300,
+                color: isDark ? Colors.grey.shade700 : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Quick Actions',
-              style: TextStyle(
-                fontSize: 18,
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -587,9 +600,9 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.1),
+          color: AppColors.primary.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+          border: Border.all(color: AppColors.primary.withOpacity(0.2)),
         ),
         child: Row(
           children: [
@@ -598,7 +611,7 @@ class _AIChatbotScreenState extends State<AIChatbotScreen>
             Expanded(
               child: Text(
                 title,
-                style: TextStyle(
+                style: const TextStyle(
                   color: AppColors.primary,
                   fontWeight: FontWeight.w600,
                   fontSize: 12,

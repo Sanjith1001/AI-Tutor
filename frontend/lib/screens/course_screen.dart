@@ -20,11 +20,15 @@ class CourseScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.blue.shade100,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(title),
-        backgroundColor: Colors.blue.shade800,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.colorScheme.primary,
+        foregroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -39,7 +43,7 @@ class CourseScreen extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.blue.shade600,
+                    color: Colors.white.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -65,11 +69,11 @@ class CourseScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.1),
+                      color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
                       spreadRadius: 1,
                       blurRadius: 3,
                       offset: const Offset(0, 1),
@@ -81,23 +85,23 @@ class CourseScreen extends StatelessWidget {
                   children: [
                     Text(
                       'Course Progress',
-                      style: TextStyle(
-                        fontSize: 18,
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[800],
                       ),
                     ),
                     const SizedBox(height: 8),
                     LinearProgressIndicator(
                       value: 0.3, // Placeholder progress
-                      backgroundColor: Colors.grey[300],
+                      backgroundColor: isDark ? Colors.grey[800] : Colors.grey[300],
                       valueColor:
-                          AlwaysStoppedAnimation<Color>(Colors.blue.shade600),
+                          const AlwaysStoppedAnimation<Color>(Colors.blue),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       '${modules.length} modules available',
-                      style: TextStyle(color: Colors.grey[600]),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      ),
                     ),
                   ],
                 ),
@@ -107,10 +111,8 @@ class CourseScreen extends StatelessWidget {
               // Modules list
               Text(
                 'Course Modules',
-                style: TextStyle(
-                  fontSize: 22,
+                style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
                 ),
               ),
               const SizedBox(height: 16),
@@ -171,6 +173,9 @@ class _ModuleCardState extends State<ModuleCard> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       child: MouseRegion(
@@ -198,22 +203,16 @@ class _ModuleCardState extends State<ModuleCard> {
               },
             );
 
-            // Update course progress
-            final progress = ((widget.index + 1) / widget.totalModules) * 100;
-            await CourseStorageService.updateCourseProgress(
-              moduleIndex: widget.index,
-              progress: progress,
-            );
-
-            // Navigate to AI module content screen
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => AIModuleContentScreen(
                   moduleTitle: widget.title,
                   moduleDescription: widget.description,
+                  moduleIndex: widget.index,
                   learningStyle: widget.learningStyle,
-                  courseTitle: widget.courseTitle ?? widget.course?.title,
+                  courseTitle: widget.courseTitle ?? '',
+                  totalModules: widget.totalModules,
                 ),
               ),
             );
@@ -224,20 +223,20 @@ class _ModuleCardState extends State<ModuleCard> {
             child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
                     color: _isHovered
                         ? Colors.blue.withOpacity(0.2)
-                        : Colors.grey.withOpacity(0.1),
+                        : Colors.black.withOpacity(isDark ? 0.25 : 0.05),
                     spreadRadius: _isHovered ? 3 : 1,
                     blurRadius: _isHovered ? 10 : 5,
                     offset: const Offset(0, 3),
                   ),
                 ],
                 border: _isHovered
-                    ? Border.all(color: Colors.blue.shade300, width: 2)
+                    ? Border.all(color: Colors.blue.withOpacity(0.5), width: 2)
                     : null,
               ),
               child: Column(
@@ -250,7 +249,7 @@ class _ModuleCardState extends State<ModuleCard> {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: Colors.blue.shade600,
+                          color: Colors.blue,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Center(
@@ -271,10 +270,8 @@ class _ModuleCardState extends State<ModuleCard> {
                           children: [
                             Text(
                               widget.title,
-                              style: TextStyle(
-                                fontSize: 18,
+                              style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
-                                color: Colors.grey[800],
                               ),
                             ),
                             if (widget.learningStyle != null)
@@ -283,14 +280,14 @@ class _ModuleCardState extends State<ModuleCard> {
                                 padding: const EdgeInsets.symmetric(
                                     horizontal: 8, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: Colors.blue.shade100,
+                                  color: Colors.blue.withOpacity(0.15),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
                                   widget.learningStyle!,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     fontSize: 12,
-                                    color: Colors.blue.shade700,
+                                    color: Colors.blue,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
@@ -300,7 +297,7 @@ class _ModuleCardState extends State<ModuleCard> {
                       ),
                       Icon(
                         Icons.arrow_forward_ios,
-                        color: Colors.grey[400],
+                        color: isDark ? Colors.grey[600] : Colors.grey[400],
                         size: 20,
                       ),
                     ],
@@ -310,9 +307,8 @@ class _ModuleCardState extends State<ModuleCard> {
                   // Module description
                   Text(
                     widget.description,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
                       height: 1.4,
                     ),
                     maxLines: 3,
@@ -323,13 +319,13 @@ class _ModuleCardState extends State<ModuleCard> {
                   // Bottom row with features info
                   Row(
                     children: [
-                      _buildFeatureChip(Icons.book, 'Content'),
+                      _buildFeatureChip(context, Icons.book, 'Content'),
                       const SizedBox(width: 8),
-                      _buildFeatureChip(Icons.quiz, 'Quiz'),
+                      _buildFeatureChip(context, Icons.quiz, 'Quiz'),
                       const SizedBox(width: 8),
-                      _buildFeatureChip(Icons.video_library, 'Videos'),
+                      _buildFeatureChip(context, Icons.video_library, 'Videos'),
                       const SizedBox(width: 8),
-                      _buildFeatureChip(Icons.headphones, 'Audio'),
+                      _buildFeatureChip(context, Icons.headphones, 'Audio'),
                     ],
                   ),
                 ],
@@ -341,23 +337,26 @@ class _ModuleCardState extends State<ModuleCard> {
     );
   }
 
-  Widget _buildFeatureChip(IconData icon, String label) {
+  Widget _buildFeatureChip(BuildContext context, IconData icon, String label) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: isDark ? Colors.grey[800] : Colors.grey[100],
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: Colors.grey[600]),
+          Icon(icon, size: 14, color: isDark ? Colors.grey[400] : Colors.grey[600]),
           const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey[600],
+              color: isDark ? Colors.grey[400] : Colors.grey[600],
               fontWeight: FontWeight.w500,
             ),
           ),

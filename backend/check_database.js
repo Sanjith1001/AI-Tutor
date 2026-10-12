@@ -7,9 +7,9 @@ require('dotenv').config();
 const connectDB = async () => {
   try {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/bytebrain_db');
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
   } catch (error) {
-    console.error('❌ MongoDB connection failed:', error);
+    console.error(' MongoDB connection failed:', error);
     process.exit(1);
   }
 };
@@ -17,7 +17,7 @@ const connectDB = async () => {
 // Check database contents
 const checkDatabase = async () => {
   try {
-    console.log('🔍 Checking database contents...\n');
+    console.log(' Checking database contents...\n');
 
     // Check Users collection
     console.log('👥 USERS COLLECTION:');
@@ -26,45 +26,45 @@ const checkDatabase = async () => {
     const users = await User.find({}).select('email firstName lastName role isEmailVerified isActive createdAt');
     
     if (users.length === 0) {
-      console.log('❌ No users found in database');
+      console.log(' No users found in database');
     } else {
-      console.log(`📊 Total users: ${users.length}\n`);
+      console.log(` Total users: ${users.length}\n`);
       
       users.forEach((user, index) => {
         console.log(`${index + 1}. ${user.firstName} ${user.lastName}`);
-        console.log(`   📧 Email: ${user.email}`);
-        console.log(`   🎭 Role: ${user.role}`);
-        console.log(`   ✅ Verified: ${user.isEmailVerified}`);
-        console.log(`   🟢 Active: ${user.isActive}`);
-        console.log(`   📅 Created: ${user.createdAt}`);
+        console.log(`    Email: ${user.email}`);
+        console.log(`    Role: ${user.role}`);
+        console.log(`   Verified: ${user.isEmailVerified}`);
+        console.log(`   Active: ${user.isActive}`);
+        console.log(`    Created: ${user.createdAt}`);
         console.log('   ' + '-'.repeat(40));
       });
     }
 
-    console.log('\n📚 COURSES COLLECTION:');
+    console.log('\n COURSES COLLECTION:');
     console.log('='.repeat(50));
     
     const courses = await Course.find({}).select('title instructor category difficulty isPublished createdAt');
     
     if (courses.length === 0) {
-      console.log('❌ No courses found in database');
+      console.log('No courses found in database');
     } else {
-      console.log(`📊 Total courses: ${courses.length}\n`);
+      console.log(` Total courses: ${courses.length}\n`);
       
       for (const course of courses) {
         const instructor = await User.findById(course.instructor).select('firstName lastName');
         console.log(`📖 ${course.title}`);
-        console.log(`   👨‍🏫 Instructor: ${instructor ? `${instructor.firstName} ${instructor.lastName}` : 'Unknown'}`);
-        console.log(`   📂 Category: ${course.category}`);
-        console.log(`   📊 Difficulty: ${course.difficulty}`);
-        console.log(`   📢 Published: ${course.isPublished}`);
-        console.log(`   📅 Created: ${course.createdAt}`);
+        console.log(`    Instructor: ${instructor ? `${instructor.firstName} ${instructor.lastName}` : 'Unknown'}`);
+        console.log(`   Category: ${course.category}`);
+        console.log(`    Difficulty: ${course.difficulty}`);
+        console.log(`    Published: ${course.isPublished}`);
+        console.log(`    Created: ${course.createdAt}`);
         console.log('   ' + '-'.repeat(40));
       }
     }
 
     // Database statistics
-    console.log('\n📈 DATABASE STATISTICS:');
+    console.log('\n DATABASE STATISTICS:');
     console.log('='.repeat(50));
     
     const userStats = await User.aggregate([
@@ -76,7 +76,7 @@ const checkDatabase = async () => {
       }
     ]);
 
-    console.log('👥 Users by role:');
+    console.log(' Users by role:');
     userStats.forEach(stat => {
       console.log(`   ${stat._id}: ${stat.count}`);
     });
@@ -85,12 +85,12 @@ const checkDatabase = async () => {
     const activeCount = await User.countDocuments({ isActive: true });
     const publishedCourses = await Course.countDocuments({ isPublished: true });
 
-    console.log(`✅ Verified users: ${verifiedCount}`);
-    console.log(`🟢 Active users: ${activeCount}`);
-    console.log(`📚 Published courses: ${publishedCourses}`);
+    console.log(` Verified users: ${verifiedCount}`);
+    console.log(` Active users: ${activeCount}`);
+    console.log(` Published courses: ${publishedCourses}`);
 
     // Test login credentials
-    console.log('\n🔐 TEST LOGIN CREDENTIALS:');
+    console.log('\n TEST LOGIN CREDENTIALS:');
     console.log('='.repeat(50));
     
     const testUsers = await User.find({
@@ -101,18 +101,18 @@ const checkDatabase = async () => {
       testUsers.forEach(user => {
         const password = user.email.includes('admin') ? 'admin123' : 
                         user.email.includes('student') ? 'student123' : 'test123';
-        console.log(`📧 ${user.email} / 🔑 ${password} (${user.role})`);
+        console.log(` ${user.email} / 🔑 ${password} (${user.role})`);
       });
     } else {
-      console.log('❌ No test users found. Creating them now...');
+      console.log(' No test users found. Creating them now...');
       await createTestUsers();
     }
 
   } catch (error) {
-    console.error('❌ Error checking database:', error);
+    console.error(' Error checking database:', error);
   } finally {
     await mongoose.connection.close();
-    console.log('\n🔌 Database connection closed');
+    console.log('\n Database connection closed');
   }
 };
 
@@ -157,11 +157,11 @@ const createTestUsers = async () => {
       if (!existingUser) {
         const user = new User(userData);
         await user.save();
-        console.log(`✅ Created user: ${userData.email}`);
+        console.log(` Created user: ${userData.email}`);
       }
     }
   } catch (error) {
-    console.error('❌ Error creating test users:', error);
+    console.error(' Error creating test users:', error);
   }
 };
 

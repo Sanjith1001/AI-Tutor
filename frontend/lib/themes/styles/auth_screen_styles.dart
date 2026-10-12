@@ -47,38 +47,43 @@ class AuthScreenStyles {
       );
 
   // Input Field Styles
-  static InputDecoration inputDecoration(String label, IconData icon) =>
-      InputDecoration(
-        labelText: label,
-        prefixIcon: Icon(icon, color: AppColors.textSecondary),
-        filled: true,
-        fillColor: AppColors.surfaceVariant,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.error, width: 2),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.error, width: 2),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        labelStyle: AppTypography.bodyMedium.copyWith(
-          color: AppColors.textSecondary,
-        ),
-      );
+  static InputDecoration inputDecoration(BuildContext context, String label, IconData icon) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return InputDecoration(
+      labelText: label,
+      prefixIcon: Icon(icon, color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary),
+      filled: true,
+      fillColor: isDark ? AppColors.darkSurfaceVariant : AppColors.surfaceVariant,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.primary, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error, width: 2),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: AppColors.error, width: 2),
+      ),
+      contentPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      labelStyle: AppTypography.bodyMedium.copyWith(
+        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+      ),
+    );
+  }
 
-  static TextStyle get inputTextStyle => AppTypography.bodyMedium.copyWith(
-        color: AppColors.textPrimary,
-      );
+  static TextStyle inputTextStyle(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return AppTypography.bodyMedium.copyWith(
+      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
+    );
+  }
 
   // Button Styles
   static ButtonStyle get primaryButtonStyle => ElevatedButton.styleFrom(

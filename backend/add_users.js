@@ -24,7 +24,7 @@ async function createTestUsers() {
         }
       });
       await admin.save();
-      console.log('✅ Admin user created: admin@aitutor.com / admin123');
+      console.log('Admin user created: admin@aitutor.com / admin123');
     }
 
     if (!studentExists) {
@@ -44,12 +44,12 @@ async function createTestUsers() {
         }
       });
       await student.save();
-      console.log('✅ Student user created: student@aitutor.com / student123');
+      console.log(' Student user created: student@aitutor.com / student123');
     }
 
-    console.log('🎯 Test users ready!');
+    console.log(' Test users ready!');
   } catch (error) {
-    console.error('❌ Error creating test users:', error);
+    console.error(' Error creating test users:', error);
   }
 }
 

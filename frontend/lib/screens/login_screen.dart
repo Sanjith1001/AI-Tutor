@@ -86,8 +86,11 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -101,11 +104,11 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: AppColors.surface,
+                    color: theme.cardColor,
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.shadow,
+                        color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -124,9 +127,8 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
               Center(
                 child: Text(
                   'Welcome to ByteBrain',
-                  style: AppTypography.headlineMedium.copyWith(
+                  style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -135,8 +137,8 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
               Center(
                 child: Text(
                   'Sign in to continue your learning journey',
-                  style: AppTypography.bodyLarge.copyWith(
-                    color: AppColors.textSecondary,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -152,7 +154,9 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                     TextFormField(
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
+                      style: theme.textTheme.bodyMedium,
                       decoration: AuthScreenStyles.inputDecoration(
+                        context,
                         'Email Address',
                         Icons.email_outlined,
                       ),
@@ -173,7 +177,9 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                     TextFormField(
                       controller: _passwordController,
                       obscureText: _obscurePassword,
+                      style: theme.textTheme.bodyMedium,
                       decoration: AuthScreenStyles.inputDecoration(
+                        context,
                         'Password',
                         Icons.lock_outline,
                       ).copyWith(
@@ -182,7 +188,7 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                             _obscurePassword
                                 ? Icons.visibility
                                 : Icons.visibility_off,
-                            color: AppColors.textSecondary,
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                           ),
                           onPressed: () => setState(
                               () => _obscurePassword = !_obscurePassword),
@@ -214,8 +220,8 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                         ),
                         Text(
                           'Remember me',
-                          style: AppTypography.bodyMedium.copyWith(
-                            color: AppColors.textSecondary,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                           ),
                         ),
                         const Spacer(),
@@ -229,8 +235,9 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                           ),
                           child: Text(
                             'Forgot Password?',
-                            style: AppTypography.bodyMedium.copyWith(
+                            style: theme.textTheme.bodyMedium?.copyWith(
                               color: AppColors.primary,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
@@ -265,22 +272,22 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                         Expanded(
                           child: Container(
                             height: 1,
-                            color: AppColors.divider,
+                            color: isDark ? AppColors.darkSurfaceVariant : AppColors.divider,
                           ),
                         ),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Text(
                             'or',
-                            style: AppTypography.bodySmall.copyWith(
-                              color: AppColors.textSecondary,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: isDark ? AppColors.darkTextTertiary : AppColors.textTertiary,
                             ),
                           ),
                         ),
                         Expanded(
                           child: Container(
                             height: 1,
-                            color: AppColors.divider,
+                            color: isDark ? AppColors.darkSurfaceVariant : AppColors.divider,
                           ),
                         ),
                       ],
@@ -294,8 +301,8 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                         children: [
                           Text(
                             "Don't have an account? ",
-                            style: AppTypography.bodyMedium.copyWith(
-                              color: AppColors.textSecondary,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                             ),
                           ),
                           TextButton(
@@ -313,7 +320,7 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                             ),
                             child: Text(
                               'Sign up',
-                              style: AppTypography.bodyMedium.copyWith(
+                              style: theme.textTheme.bodyMedium?.copyWith(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -340,14 +347,14 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                                 if (!_loading) await _login();
                               },
                         style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: AppColors.primary),
+                          side: const BorderSide(color: AppColors.primary),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         child: Text(
                           'Use Test Account',
-                          style: AppTypography.bodyMedium.copyWith(
+                          style: theme.textTheme.bodyMedium?.copyWith(
                             color: AppColors.primary,
                             fontWeight: FontWeight.w600,
                           ),
@@ -361,24 +368,24 @@ class _ByteBrainLoginScreenState extends State<ByteBrainLoginScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.surface,
+                        color: theme.cardColor,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.divider),
+                        border: Border.all(color: isDark ? AppColors.darkSurfaceVariant : AppColors.divider),
                       ),
                       child: Column(
                         children: [
                           Text(
                             'Test Users',
-                            style: AppTypography.labelMedium.copyWith(
+                            style: theme.textTheme.labelMedium?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: AppColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Text(
                             'Student: student@aitutor.com / student123\nAdmin: admin@aitutor.com / admin123',
-                            style: AppTypography.labelSmall.copyWith(
-                              color: AppColors.textSecondary,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontSize: 11,
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                             ),
                             textAlign: TextAlign.center,
                           ),

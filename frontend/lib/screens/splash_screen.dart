@@ -75,28 +75,31 @@ class _ByteBrainSplashScreenState extends State<ByteBrainSplashScreen>
 
   void _startAnimationSequence() async {
     // Start logo animation immediately
+    if (!mounted) return;
     _logoController.forward();
 
     // Wait for logo animation to complete, then start tagline
     await Future.delayed(const Duration(milliseconds: 400));
+    if (!mounted) return;
     _taglineController.forward();
 
     // Wait for total splash duration, then fade out and navigate
     await Future.delayed(const Duration(milliseconds: 1300));
+    if (!mounted) return;
     _fadeOutController.forward();
 
     await Future.delayed(const Duration(milliseconds: 400));
-    if (mounted) {
-      // Navigate to login
-      Navigator.of(context).pushReplacement(
-        PageRouteBuilder(
-          pageBuilder: (_, __, ___) => const AuthWrapper(),
-          transitionsBuilder: (_, anim, __, child) =>
-              FadeTransition(opacity: anim, child: child),
-          transitionDuration: const Duration(milliseconds: 300),
-        ),
-      );
-    }
+    if (!mounted) return;
+
+    // Navigate to login
+    Navigator.of(context).pushReplacement(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => const AuthWrapper(),
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
+        transitionDuration: const Duration(milliseconds: 300),
+      ),
+    );
   }
 
   @override

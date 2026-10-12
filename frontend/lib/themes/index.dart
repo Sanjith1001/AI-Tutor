@@ -1,5 +1,7 @@
 // Theme Exports
 export 'app_theme.dart';
+export 'theme_manager.dart';
+
 
 // Colors
 export 'colors/app_colors.dart';

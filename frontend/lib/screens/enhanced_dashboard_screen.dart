@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/activity_service.dart';
+import '../themes/index.dart';
 
 class EnhancedDashboardScreen extends StatefulWidget {
   const EnhancedDashboardScreen({Key? key}) : super(key: key);
@@ -33,26 +34,23 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Refresh dashboard stats when app resumes
     if (state == AppLifecycleState.resumed) {
-      print('📊 [Dashboard] App resumed, refreshing stats...');
+      debugPrint('📊 [Dashboard] App resumed, refreshing stats...');
       _loadDashboardData();
     }
   }
 
   Future<void> _loadDashboardData() async {
     try {
-      // Check if user has changed and refresh data if needed
       final needsRefresh = await ActivityService.needsRefresh();
       if (needsRefresh) {
-        print('📊 [Dashboard] User changed, refreshing activities...');
+        debugPrint('📊 [Dashboard] User changed, refreshing activities...');
       }
 
-      print('📊 [Dashboard] Loading dashboard data...');
+      debugPrint('📊 [Dashboard] Loading dashboard data...');
 
-      // Load data with individual error handling
       final stats = await ActivityService.getStats().catchError((e) {
-        print('❌ [Dashboard] Error loading stats: $e');
+        debugPrint('❌ [Dashboard] Error loading stats: $e');
         return <String, dynamic>{
           'coursesCompleted': 0,
           'quizzesTaken': 0,
@@ -64,31 +62,31 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
         };
       });
 
-      print('✅ [Dashboard] Stats loaded: $stats');
+      debugPrint('✅ [Dashboard] Stats loaded: $stats');
 
       final activities =
           await ActivityService.getRecentActivities(limit: 10).catchError((e) {
-        print('❌ [Dashboard] Error loading activities: $e');
+        debugPrint('❌ [Dashboard] Error loading activities: $e');
         return <Map<String, dynamic>>[];
       });
 
-      print('✅ [Dashboard] Activities loaded: ${activities.length} items');
+      debugPrint('✅ [Dashboard] Activities loaded: ${activities.length} items');
 
       final learningStyle =
           await ActivityService.getLearningStyle().catchError((e) {
-        print('❌ [Dashboard] Error loading learning style: $e');
+        debugPrint('❌ [Dashboard] Error loading learning style: $e');
         return null;
       });
 
       final skillLevel = await ActivityService.getSkillLevel().catchError((e) {
-        print('❌ [Dashboard] Error loading skill level: $e');
+        debugPrint('❌ [Dashboard] Error loading skill level: $e');
         return null;
       });
 
       final statsAverage = stats['averageScore'];
       final averageScore = statsAverage is num ? statsAverage.toDouble() : 0.0;
 
-      print('📊 [Dashboard] Average score: $averageScore');
+      debugPrint('📊 [Dashboard] Average score: $averageScore');
 
       if (mounted) {
         setState(() {
@@ -101,7 +99,7 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
         });
       }
     } catch (e) {
-      print('❌ [Dashboard] Error loading dashboard data: $e');
+      debugPrint('❌ [Dashboard] Error loading dashboard data: $e');
       if (mounted) {
         setState(() {
           _stats = {
@@ -124,11 +122,13 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: Colors.white,
+      return Scaffold(
+        backgroundColor: theme.scaffoldBackgroundColor,
         body: Center(
-          child: CircularProgressIndicator(color: Colors.red),
+          child: CircularProgressIndicator(color: theme.colorScheme.primary),
         ),
       );
     }
@@ -139,10 +139,10 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
         testsTakenRaw is num ? testsTakenRaw.toInt() : int.tryParse('$testsTakenRaw') ?? 0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: RefreshIndicator(
         onRefresh: _loadDashboardData,
-        color: Colors.red,
+        color: theme.colorScheme.primary,
         child: SingleChildScrollView(
           child: Column(
             children: [
@@ -156,24 +156,22 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Stats Overview Section
-                    const Text(
+                    Text(
                       'Statistics Overview',
-                      style: TextStyle(
-                        fontSize: 24,
+                      style: theme.textTheme.headlineSmall?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF2D3748),
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Stats Cards Grid
+                    
+                    // Stats Cards Grid - Adjusted aspect ratio to prevent layout overflow
                     GridView.count(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       crossAxisCount: 2,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
-                      childAspectRatio: 3.2,
+                      childAspectRatio: 1.3,
                       children: [
                         _buildStatCard(
                           icon: Icons.school,
@@ -185,7 +183,7 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
                           icon: Icons.quiz,
                           title: 'Tests\nTaken',
                           value: '$testsTaken',
-                          color: Colors.blue,
+                          color: Colors.red,
                         ),
                         _buildStatCard(
                           icon: Icons.trending_up,
@@ -207,7 +205,9 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
                     // Learning Profile Section
                     _buildLearningProfileSection(),
 
-                    const SizedBox(height: 32), // Recent Activity Section
+                    const SizedBox(height: 32),
+                    
+                    // Recent Activity Section
                     _buildRecentActivitySection(),
                   ],
                 ),
@@ -227,7 +227,7 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+          colors: [Color(0xFF6366F1), Color(0xFF8B5CF6)], // Consistent Indigo & Purple
         ),
         borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(30),
@@ -241,12 +241,11 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 10),
-              // Dashboard Icon
               Container(
                 width: 50,
                 height: 50,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(
@@ -256,7 +255,6 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
                 ),
               ),
               const SizedBox(height: 16),
-              // Main Title
               const Text(
                 'Learning Dashboard',
                 style: TextStyle(
@@ -266,7 +264,6 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
                 ),
               ),
               const SizedBox(height: 6),
-              // Subtitle
               const Text(
                 'Track your progress and achievements',
                 style: TextStyle(
@@ -288,86 +285,73 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
     required String value,
     required Color color,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       decoration: BoxDecoration(
+        color: theme.cardColor,
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white,
-            color.withValues(alpha: 0.05),
+            theme.cardColor,
+            color.withOpacity(isDark ? 0.08 : 0.03),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: color.withValues(alpha: 0.2),
+          color: color.withOpacity(isDark ? 0.25 : 0.15),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.1),
+            color: color.withOpacity(isDark ? 0.15 : 0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Glowing Icon Container
             Container(
-              width: 50,
-              height: 50,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  colors: [
-                    color.withValues(alpha: 0.3),
-                    color.withValues(alpha: 0.1),
-                  ],
-                ),
+                color: color.withOpacity(isDark ? 0.2 : 0.1),
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: color.withValues(alpha: 0.4),
+                  color: color.withOpacity(isDark ? 0.4 : 0.2),
                   width: 1,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: color.withValues(alpha: 0.3),
-                    blurRadius: 12,
-                    spreadRadius: 2,
-                  ),
-                ],
               ),
               child: Icon(
                 icon,
                 color: color,
-                size: 24,
+                size: 20,
               ),
             ),
             const Spacer(),
-            // Value
             Text(
               value,
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: color,
+                color: isDark ? theme.textTheme.bodyLarge?.color : color,
               ),
             ),
             const SizedBox(height: 4),
-            // Title
             Text(
               title,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey.shade600,
+              style: theme.textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w500,
               ),
               maxLines: 2,
@@ -380,15 +364,16 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
   }
 
   Widget _buildLearningProfileSection() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Learning Profile',
-          style: TextStyle(
-            fontSize: 24,
+          style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Color(0xFF2D3748),
           ),
         ),
         const SizedBox(height: 20),
@@ -398,29 +383,25 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
+                  color: theme.cardColor,
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Colors.white,
-                      Colors.purple.withValues(alpha: 0.05),
+                      theme.cardColor,
+                      Colors.purple.withOpacity(isDark ? 0.08 : 0.03),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: Colors.purple.withValues(alpha: 0.2),
+                    color: Colors.purple.withOpacity(isDark ? 0.25 : 0.15),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.purple.withValues(alpha: 0.1),
+                      color: Colors.purple.withOpacity(isDark ? 0.15 : 0.05),
                       blurRadius: 15,
                       offset: const Offset(0, 5),
-                    ),
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -429,14 +410,12 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.psychology, color: Colors.purple, size: 20),
+                        const Icon(Icons.psychology, color: Colors.purple, size: 20),
                         const SizedBox(width: 8),
-                        const Text(
+                        Text(
                           'Learning Style',
-                          style: TextStyle(
-                            fontSize: 14,
+                          style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: Colors.black87,
                           ),
                         ),
                       ],
@@ -444,7 +423,7 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
                     const SizedBox(height: 8),
                     Text(
                       _learningStyle ?? 'Not Set',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.purple,
@@ -459,29 +438,25 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
               child: Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
+                  color: theme.cardColor,
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Colors.white,
-                      Colors.teal.withValues(alpha: 0.05),
+                      theme.cardColor,
+                      Colors.teal.withOpacity(isDark ? 0.08 : 0.03),
                     ],
                   ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: Colors.teal.withValues(alpha: 0.2),
+                    color: Colors.teal.withOpacity(isDark ? 0.25 : 0.15),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.teal.withValues(alpha: 0.1),
+                      color: Colors.teal.withOpacity(isDark ? 0.15 : 0.05),
                       blurRadius: 15,
                       offset: const Offset(0, 5),
-                    ),
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
                     ),
                   ],
                 ),
@@ -490,14 +465,12 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
                   children: [
                     Row(
                       children: [
-                        Icon(Icons.school, color: Colors.teal, size: 20),
+                        const Icon(Icons.school, color: Colors.teal, size: 20),
                         const SizedBox(width: 8),
-                        const Text(
+                        Text(
                           'Skill Level',
-                          style: TextStyle(
-                            fontSize: 14,
+                          style: theme.textTheme.titleSmall?.copyWith(
                             fontWeight: FontWeight.w600,
-                            color: Colors.black87,
                           ),
                         ),
                       ],
@@ -505,7 +478,7 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
                     const SizedBox(height: 8),
                     Text(
                       _skillLevel ?? 'Not Set',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Colors.teal,
@@ -523,7 +496,6 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
 
   String _formatActivityTimestamp(Map<String, dynamic> activity) {
     try {
-      // Handle different timestamp formats
       if (activity['timeAgo'] != null) {
         return activity['timeAgo'].toString();
       }
@@ -533,7 +505,6 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
         if (timestamp is int) {
           return ActivityService.formatTimestamp(timestamp);
         } else if (timestamp is String) {
-          // Try to parse as DateTime string
           try {
             final dateTime = DateTime.parse(timestamp);
             return ActivityService.formatTimestamp(
@@ -546,49 +517,38 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
 
       return 'Recently';
     } catch (e) {
-      print('Error formatting timestamp: $e');
+      debugPrint('Error formatting timestamp: $e');
       return 'Recently';
     }
   }
 
   Widget _buildRecentActivitySection() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Recent Activity',
-          style: TextStyle(
-            fontSize: 24,
+          style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Color(0xFF2D3748),
           ),
         ),
         const SizedBox(height: 20),
         Container(
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white,
-                Colors.grey.withValues(alpha: 0.05),
-              ],
-            ),
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color: Colors.grey.withValues(alpha: 0.2),
+              color: isDark ? AppColors.darkSurfaceVariant : AppColors.divider,
               width: 1,
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.grey.withValues(alpha: 0.1),
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.03),
                 blurRadius: 15,
                 offset: const Offset(0, 5),
-              ),
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 2),
               ),
             ],
           ),
@@ -600,24 +560,19 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
                       Icon(
                         Icons.history,
                         size: 48,
-                        color: Colors.grey[400],
+                        color: isDark ? AppColors.darkTextTertiary : Colors.grey[400],
                       ),
                       const SizedBox(height: 16),
                       Text(
                         'No recent activity',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.grey[600],
+                        style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Start taking quizzes or courses to see your activity here!',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[500],
-                        ),
+                        style: theme.textTheme.bodySmall,
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -628,7 +583,7 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
                   physics: const NeverScrollableScrollPhysics(),
                   itemCount: _recentActivities.length,
                   separatorBuilder: (context, index) => Divider(
-                    color: Colors.grey[100],
+                    color: isDark ? AppColors.darkSurfaceVariant : Colors.grey[100],
                     height: 1,
                   ),
                   itemBuilder: (context, index) {
@@ -643,7 +598,7 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
                         decoration: BoxDecoration(
                           color: ActivityService.getActivityColor(
                                   activity['type']?.toString() ?? 'unknown')
-                              .withValues(alpha: 0.1),
+                              .withOpacity(isDark ? 0.2 : 0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Icon(
@@ -656,16 +611,14 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
                       ),
                       title: Text(
                         activity['title']?.toString() ?? 'Unknown Activity',
-                        style: const TextStyle(
+                        style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
-                          fontSize: 14,
                         ),
                       ),
                       subtitle: Text(
                         '${activity['description']?.toString() ?? 'No description'} • ${_formatActivityTimestamp(activity)}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey[600],
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: isDark ? AppColors.darkTextSecondary : Colors.grey[600],
                         ),
                       ),
                       trailing: activity['metadata'] != null &&
@@ -676,13 +629,13 @@ class _EnhancedDashboardScreenState extends State<EnhancedDashboardScreen>
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: Colors.green.withValues(alpha: 0.1),
+                                color: Colors.green.withOpacity(isDark ? 0.2 : 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Text(
                                 '${activity['metadata']['score']}%',
                                 style: TextStyle(
-                                  color: Colors.green.shade700,
+                                  color: isDark ? Colors.green.shade400 : Colors.green.shade700,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 12,
                                 ),

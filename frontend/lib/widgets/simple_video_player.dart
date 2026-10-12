@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../utils/image_helper.dart';
 
 // Helper function to format time ago
 String _formatTimeAgo(DateTime publishedDate) {
@@ -412,15 +413,19 @@ class _CompactVideoPlayerState extends State<CompactVideoPlayer>
                           borderRadius: const BorderRadius.vertical(
                             top: Radius.circular(8),
                           ),
-                          image: widget.thumbnailUrl != null
-                              ? DecorationImage(
-                                  image: NetworkImage(widget.thumbnailUrl!),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
                         ),
+                        clipBehavior: Clip.hardEdge,
                         child: Stack(
                           children: [
+                            Positioned.fill(
+                              child: widget.thumbnailUrl != null &&
+                                      widget.thumbnailUrl!.isNotEmpty
+                                  ? safeNetworkImage(
+                                      widget.thumbnailUrl!,
+                                      fit: BoxFit.cover,
+                                    )
+                                  : Container(color: Colors.grey[300]),
+                            ),
                             // Hover overlay
                             if (_isHovered)
                               Container(

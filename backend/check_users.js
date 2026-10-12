@@ -6,7 +6,7 @@ async function checkUsers() {
   try {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/bytebrain_db');
-    console.log('✅ Connected to MongoDB');
+    console.log(' Connected to MongoDB');
 
     // Get users directly from database
     const db = mongoose.connection.db;

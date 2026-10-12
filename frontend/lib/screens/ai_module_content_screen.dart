@@ -12,15 +12,19 @@ import '../widgets/simple_video_player.dart';
 class AIModuleContentScreen extends StatefulWidget {
   final String moduleTitle;
   final String moduleDescription;
+  final int? moduleIndex;
   final String? learningStyle;
   final String? courseTitle;
+  final int? totalModules;
 
   const AIModuleContentScreen({
     super.key,
     required this.moduleTitle,
     required this.moduleDescription,
+    this.moduleIndex,
     this.learningStyle,
     this.courseTitle,
+    this.totalModules,
   });
 
   @override
@@ -592,7 +596,18 @@ class _AIModuleContentScreenState extends State<AIModuleContentScreen>
   @override
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Theme(
+      data: Theme.of(context).copyWith(
+        brightness: Brightness.light,
+        scaffoldBackgroundColor: Colors.white,
+        canvasColor: Colors.white,
+        textTheme: Theme.of(context).textTheme.apply(
+              bodyColor: Colors.black,
+              displayColor: Colors.black,
+            ),
+      ),
+      child: Scaffold(
+        backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(widget.moduleTitle),
         backgroundColor: Colors.blue.shade800,
@@ -612,16 +627,19 @@ class _AIModuleContentScreenState extends State<AIModuleContentScreen>
           ],
         ),
       ),
-      body: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildContentTab('content'),
-          _buildContentTab('simplified'),
-          _buildContentTab('quiz'),
-          _buildContentTab('examples'),
-          _buildVideosTab(),
-          _buildAudioTab(),
-        ],
+      body: Container(
+        color: Colors.white,
+        child: TabBarView(
+          controller: _tabController,
+          children: [
+            _buildContentTab('content'),
+            _buildContentTab('simplified'),
+            _buildContentTab('quiz'),
+            _buildContentTab('examples'),
+            _buildVideosTab(),
+            _buildAudioTab(),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _markModuleComplete,
@@ -630,7 +648,8 @@ class _AIModuleContentScreenState extends State<AIModuleContentScreen>
         icon: const Icon(Icons.check_circle),
         label: const Text('Mark Complete'),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+      ),
     );
   }
 
@@ -751,10 +770,13 @@ class _AIModuleContentScreenState extends State<AIModuleContentScreen>
             ),
           );
         } else {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
-            child: _buildFormattedContent(
-                snapshot.data ?? 'No content available', contentType),
+          return Container(
+            color: Colors.white,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: _buildFormattedContent(
+                  snapshot.data ?? 'No content available', contentType),
+            ),
           );
         }
       },

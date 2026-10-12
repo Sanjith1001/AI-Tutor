@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../services/youtube_service.dart';
 import 'youtube_shorts_carousel.dart';
 import 'youtube_video_card.dart';
-import 'embedded_video_player.dart';
 
 class VideosTabWidget extends StatefulWidget {
   final String? searchQuery;
@@ -86,13 +86,15 @@ class _VideosTabWidgetState extends State<VideosTabWidget> {
     }
   }
 
-  void _openVideoPlayer(YouTubeVideo video) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EmbeddedVideoPlayerScreen(video: video),
-      ),
-    );
+  Future<void> _openVideoPlayer(YouTubeVideo video) async {
+    final url = Uri.parse(video.watchUrl);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Could not open this YouTube video.')),
+      );
+    }
   }
 
   Future<void> _onRefresh() async {

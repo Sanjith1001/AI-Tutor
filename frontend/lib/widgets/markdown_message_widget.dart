@@ -19,6 +19,9 @@ class MarkdownMessageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -26,7 +29,7 @@ class MarkdownMessageWidget extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            color: isUser ? AppColors.primary : Colors.white,
+            color: isUser ? AppColors.primary : theme.cardColor,
             borderRadius: BorderRadius.circular(20).copyWith(
               bottomLeft:
                   isUser ? const Radius.circular(20) : const Radius.circular(4),
@@ -35,7 +38,7 @@ class MarkdownMessageWidget extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
+                color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
                 blurRadius: 5,
                 offset: const Offset(0, 2),
               ),
@@ -47,7 +50,7 @@ class MarkdownMessageWidget extends StatelessWidget {
         // Suggestions for AI messages
         if (!isUser && suggestions.isNotEmpty) ...[
           const SizedBox(height: 8),
-          _buildSuggestions(),
+          _buildSuggestions(context),
         ],
       ],
     );
@@ -65,6 +68,12 @@ class MarkdownMessageWidget extends StatelessWidget {
   }
 
   Widget _buildAIMessage(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final textColor = theme.textTheme.bodyMedium?.color ?? (isDark ? Colors.white : Colors.black87);
+    final codeBgColor = isDark ? AppColors.darkSurfaceVariant : Colors.grey.shade100;
+    final codeBorderColor = isDark ? Colors.grey.shade800 : Colors.grey.shade300;
+
     return MarkdownBody(
       data: text,
       selectable: true,
@@ -75,26 +84,26 @@ class MarkdownMessageWidget extends StatelessWidget {
       },
       styleSheet: MarkdownStyleSheet(
         // Paragraph style
-        p: const TextStyle(
-          color: Colors.black87,
+        p: TextStyle(
+          color: textColor,
           fontSize: 16,
           height: 1.4,
         ),
 
         // Headers
-        h1: TextStyle(
+        h1: const TextStyle(
           color: AppColors.primary,
           fontSize: 24,
           fontWeight: FontWeight.bold,
           height: 1.2,
         ),
-        h2: TextStyle(
+        h2: const TextStyle(
           color: AppColors.primary,
           fontSize: 20,
           fontWeight: FontWeight.bold,
           height: 1.2,
         ),
-        h3: TextStyle(
+        h3: const TextStyle(
           color: AppColors.primary,
           fontSize: 18,
           fontWeight: FontWeight.w600,
@@ -102,48 +111,48 @@ class MarkdownMessageWidget extends StatelessWidget {
         ),
 
         // Lists
-        listBullet: TextStyle(
+        listBullet: const TextStyle(
           color: AppColors.primary,
           fontSize: 16,
         ),
 
         // Code
         code: TextStyle(
-          backgroundColor: Colors.grey.shade100,
+          backgroundColor: codeBgColor,
           color: AppColors.primary,
           fontFamily: 'monospace',
           fontSize: 14,
         ),
         codeblockDecoration: BoxDecoration(
-          color: Colors.grey.shade100,
+          color: codeBgColor,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.grey.shade300),
+          border: Border.all(color: codeBorderColor),
         ),
 
         // Links
-        a: TextStyle(
+        a: const TextStyle(
           color: AppColors.primary,
           decoration: TextDecoration.underline,
         ),
 
         // Emphasis
-        strong: const TextStyle(
+        strong: TextStyle(
           fontWeight: FontWeight.bold,
-          color: Colors.black87,
+          color: textColor,
         ),
-        em: const TextStyle(
+        em: TextStyle(
           fontStyle: FontStyle.italic,
-          color: Colors.black87,
+          color: textColor,
         ),
 
         // Blockquotes
         blockquote: TextStyle(
-          color: Colors.grey.shade600,
+          color: isDark ? AppColors.darkTextSecondary : Colors.grey.shade600,
           fontStyle: FontStyle.italic,
         ),
         blockquoteDecoration: BoxDecoration(
-          color: Colors.grey.shade50,
-          border: Border(
+          color: isDark ? AppColors.darkSurfaceVariant : Colors.grey.shade50,
+          border: const Border(
             left: BorderSide(
               color: AppColors.primary,
               width: 4,
@@ -152,13 +161,13 @@ class MarkdownMessageWidget extends StatelessWidget {
         ),
 
         // Tables
-        tableHead: TextStyle(
+        tableHead: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
         ),
         tableHeadAlign: TextAlign.center,
         tableBorder: TableBorder.all(
-          color: Colors.grey.shade300,
+          color: codeBorderColor,
           width: 1,
         ),
         tableColumnWidth: const FlexColumnWidth(),
@@ -166,7 +175,10 @@ class MarkdownMessageWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildSuggestions() {
+  Widget _buildSuggestions(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Wrap(
       spacing: 6,
       runSpacing: 4,
@@ -176,17 +188,17 @@ class MarkdownMessageWidget extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: AppColors.primary.withOpacity(isDark ? 0.2 : 0.1),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: AppColors.primary.withValues(alpha: 0.3),
+                color: AppColors.primary.withOpacity(isDark ? 0.4 : 0.2),
                 width: 1,
               ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
+                const Icon(
                   Icons.lightbulb_outline,
                   size: 14,
                   color: AppColors.primary,
@@ -195,7 +207,7 @@ class MarkdownMessageWidget extends StatelessWidget {
                 Flexible(
                   child: Text(
                     suggestion,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: AppColors.primary,
                       fontSize: 12,
                       fontWeight: FontWeight.w500,

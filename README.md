@@ -1,70 +1,74 @@
-# ByteBrain AI Learning Platform
+# ByteBrain
 
-ByteBrain is an AI-powered educational platform built with Flutter, Node.js, MongoDB, and Python chatbot services. It supports personalized learning, AI-generated content, learning-style adaptation, dashboard analytics, educational video discovery, and chatbot assistance.
+ByteBrain is an AI-assisted learning platform for personalized courses, quizzes,
+progress tracking, educational videos, and chatbot-based question answering.
+The repository contains a Flutter client, a Node.js API, and optional Python
+chatbot services.
 
 ## Features
 
-- AI-powered course and module content generation with Groq.
-- VARK learning-style assessment and personalized learning paths.
-- Interactive modules for HTML/CSS, data preprocessing, state management, data structures, machine learning, and more.
-- Progress tracking, activity history, quiz scores, and dashboard statistics.
-- YouTube Data API integration for educational video search and in-app browsing.
-- Groq chatbot and Python chatbot options for educational Q&A.
-- Multi-platform Flutter support for web, Windows, Android, iOS, macOS, and Linux.
+- Flutter application for web, Windows, Android, iOS, macOS, and Linux.
+- User registration, login, profile, learning preferences, and progress history.
+- Courses, modules, quizzes, dashboard analytics, and activity tracking.
+- AI-generated learning content and chat using Groq.
+- Optional Python chatbot services for educational Q&A.
+- MongoDB persistence, Socket.IO support, and Docker Compose infrastructure.
 
-## Project Structure
+## Repository layout
 
 ```text
 bytebrain/
-|-- frontend/                 # Flutter app
-|   |-- lib/                  # Screens, widgets, services, models, themes
-|   |-- assets/               # Images and app assets
-|   |-- android/ ios/ web/    # Platform projects
-|   |-- windows/ linux/ macos/
-|   `-- pubspec.yaml
-|-- backend/                  # Node.js/Express API
-|   |-- server.js
-|   |-- routes/
-|   |-- controllers/
-|   |-- models/
-|   |-- middleware/
-|   |-- config/
-|   `-- package.json
-|-- backend/python_chatbot/   # Simple and advanced Python chatbot
-|-- backend/groq_chatbot/     # Groq chatbot service
-|-- database/                 # Database docs/schemas if used
-|-- docker-compose.yml
-`-- readme.md
+├── frontend/                 # Flutter application
+│   ├── lib/                  # Screens, services, widgets, themes, and models
+│   ├── assets/               # Images, fonts, data, and avatars
+│   └── pubspec.yaml
+├── backend/                  # Node.js/Express REST API
+│   ├── config/               # Database and service configuration
+│   ├── middleware/           # Authentication and error handling
+│   ├── models/               # Mongoose models
+│   ├── routes/               # API route modules
+│   ├── services/             # Application services
+│   └── package.json
+├── backend/groq_chatbot/     # Flask chatbot backed by Groq
+├── backend/python_chatbot/   # Optional Python chatbot service
+├── docker-compose.yml        # MongoDB, Redis, API, and proxy stack
+└── .gitignore
 ```
 
-## Prerequisites
+The `nginx/` directory is intentionally ignored because reverse-proxy
+configuration and TLS certificates are deployment-specific. Keep local copies
+outside Git or provide deployment configuration through your hosting platform.
 
-- Flutter SDK 3.0 or newer.
-- Dart SDK, included with Flutter.
-- Git.
-- Node.js and npm for the backend.
-- MongoDB local instance or MongoDB Atlas connection string.
-- Python 3.7 or newer for chatbot services.
-- API keys as needed:
-  - Groq API key for AI features.
-  - YouTube Data API v3 key for video features.
-  - OpenAI API key only if using the optional advanced Python chatbot.
+## Requirements
 
-## Environment Setup
+- Git
+- Flutter SDK 3.0 or newer
+- Node.js 18 or newer and npm
+- MongoDB (local or MongoDB Atlas)
+- Python 3.9 or newer for the chatbot services
+- Docker Desktop (optional, for the containerized stack)
 
-Create environment files from the available templates where present.
+## Configuration
 
-Root or frontend `.env`:
+Copy the relevant example files and keep credentials local. Never commit API
+keys, database passwords, JWT secrets, service-account JSON files, or production
+`.env` files.
+
+### Frontend
+
+Create `frontend/.env`:
 
 ```env
-GROQ_API_KEY=your_groq_key_here
-YOUTUBE_API_KEY=your_youtube_key_here
 BACKEND_URL=http://localhost:3000
-GROQ_CHATBOT_URL=http://localhost:5000
 API_URL=http://localhost:3000/api
+GROQ_CHATBOT_URL=http://localhost:5000
+GROQ_API_KEY=your_groq_api_key
+YOUTUBE_API_KEY=your_youtube_api_key
 ```
 
-Backend `.env`:
+### Node.js backend
+
+Create `backend/.env`:
 
 ```env
 PORT=3000
@@ -73,392 +77,142 @@ MONGODB_URI=mongodb://localhost:27017/bytebrain_db
 JWT_SECRET=replace_with_a_long_random_secret
 JWT_EXPIRE=7d
 JWT_REFRESH_EXPIRE=30d
-FRONTEND_URL=http://localhost:3000
-FLUTTER_APP_URL=http://localhost:8080
 ```
 
-Groq chatbot `.env` in `backend/groq_chatbot/`:
+### Groq chatbot
+
+Create `backend/.env` or configure the environment before starting the service:
 
 ```env
-GROQ_API_KEY=your_groq_key_here
+GROQ_API_KEY=your_groq_api_key
 ```
 
-Python chatbot `.env` in `backend/python_chatbot/` for advanced mode:
+The Groq chatbot listens on port `5000` by default. If no key is configured,
+its health endpoint still works, while chat requests return a clear
+configuration error.
 
-```env
-OPENAI_API_KEY=your_openai_key_here
-FLASK_DEBUG=False
-PYTHON_CHATBOT_PORT=5001
-ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8080
-```
+## Local development
 
-Never commit real API keys. Keep secrets in local `.env` files.
+Install dependencies once:
 
-## Setup And Run
+```powershell
+cd backend
+npm install
 
-Install Flutter dependencies:
-
-```bash
-cd frontend
+cd ..\frontend
 flutter pub get
-flutter doctor
 ```
 
-Run the Flutter app:
+Start MongoDB, then run the services in separate terminals:
 
-```bash
+```powershell
+# Terminal 1: Node.js API
+cd backend
+npm run dev
+
+# Terminal 2: Groq chatbot
+cd backend\groq_chatbot
+python server.py
+
+# Terminal 3: Flutter frontend
+cd frontend
 flutter run -d chrome
+```
+
+Other Flutter targets:
+
+```powershell
 flutter run -d windows
 flutter run -d android
 flutter run -d ios
 ```
 
-Install and run the backend:
+Useful health checks:
 
-```bash
-cd backend
-npm install
-npm run dev
+```text
+Node API:       http://localhost:3000/health
+Groq chatbot:   http://localhost:5000/health
 ```
 
-Run the Groq chatbot:
+## Docker Compose
 
-```bash
-cd backend/groq_chatbot
-pip install flask flask-cors groq python-dotenv
-python server.py
+Docker Compose can run MongoDB, Redis, and the Node.js API:
+
+```powershell
+docker compose up --build
 ```
 
-Run the simple Python chatbot:
+The compose file also contains an optional Nginx reverse-proxy service. Because
+`nginx/` is ignored, provide your own `nginx/nginx.conf` and certificate files
+locally before enabling that service.
 
-```bash
-cd backend/python_chatbot
-python simple_chatbot.py server 5002
+Stop the stack:
+
+```powershell
+docker compose down
 ```
 
-Run the advanced Python chatbot:
+Remove local database and cache volumes only when you intentionally want to
+delete development data:
 
-```bash
-cd backend/python_chatbot
-pip install -r requirements.txt
-python chatbot_server.py
+```powershell
+docker compose down -v
 ```
 
-## Useful Development Commands
+## Testing and quality checks
 
-```bash
+```powershell
 # Flutter
-flutter clean
-flutter pub get
-flutter run -d chrome --web-port=8080
-flutter build web
-flutter build windows
-flutter build apk
-flutter test
+cd frontend
 flutter analyze
+flutter test
 
 # Backend
-cd backend
-npm install
-npm run dev
-npm run seed
-
-# Backend endpoint test, when available
-node test_dashboard_endpoints.js
+cd ..\backend
+npm test
 ```
 
-## Backend API Summary
+Run the backend integration checks only after the API and its database are
+available:
 
-Base URL: `http://localhost:3000/api`
-
-Authentication:
-
-- `POST /auth/register`
-- `POST /auth/login`
-- `GET /auth/me`
-- `POST /auth/refresh`
-- `POST /auth/verify-email`
-- `POST /auth/forgot-password`
-- `POST /auth/reset-password`
-
-User management:
-
-- `GET /users/profile`
-- `PUT /users/profile`
-- `PUT /users/learning-style`
-- `PUT /users/preferences`
-- `PUT /users/change-password`
-
-Activities and dashboard:
-
-- `GET /activities/stats`
-- `GET /activities?limit=10`
-- `POST /activities`
-
-Typical success response:
-
-```json
-{
-  "success": true,
-  "message": "Operation completed successfully",
-  "data": {}
-}
+```powershell
+npm run test:backend
 ```
 
-Typical error response:
+## API overview
 
-```json
-{
-  "success": false,
-  "message": "Error description",
-  "errors": []
-}
+The API is served from `http://localhost:3000`. Common route groups include:
+
+- `/auth` - registration, login, token refresh, and account recovery
+- `/users` - profiles, preferences, and learning style
+- `/courses` - courses and learning modules
+- `/quizzes` - quiz content and responses
+- `/activities` - activity history and dashboard statistics
+- `/analytics` - learning analytics
+- `/youtube` - educational video search
+- `/health` - service health
+
+See `backend/docs/api_documentation.js` and the route files under
+`backend/routes/` for endpoint details.
+
+## Git and secrets
+
+Generated files, dependency directories, local environments, logs, build
+outputs, database files, credentials, and the deployment-specific `nginx/`
+directory are ignored by Git. Dependency lockfiles such as
+`backend/package-lock.json` and `frontend/pubspec.lock` remain tracked for
+reproducible installs.
+
+Before pushing changes:
+
+```powershell
+git status
+git diff --check
+git add .
+git diff --cached --stat
+git commit -m "Describe the change"
+git push origin main
 ```
 
-## Dashboard Integration
-
-The dashboard reads activity statistics from the backend and caches normalized data for offline use. It tracks:
-
-- Courses completed.
-- Modules completed.
-- Quizzes taken.
-- Assessments taken.
-- Average score.
-- Total activities.
-- Recent activity timeline.
-- Learning style and skill level.
-
-Expected data flow:
-
-```text
-Flutter Dashboard
-  -> ActivityService
-  -> GET /api/activities/stats and /api/activities?limit=10
-  -> Express backend
-  -> MongoDB activities collection
-  -> normalized stats cached in SharedPreferences
-  -> dashboard UI update
-```
-
-To verify:
-
-1. Start MongoDB and the backend.
-2. Run `cd backend && npm run dev`.
-3. Run `node test_dashboard_endpoints.js` if the script exists.
-4. Start the Flutter app.
-5. Complete a quiz, assessment, or module.
-6. Confirm the dashboard stats and recent activities update.
-
-## YouTube Integration
-
-ByteBrain integrates with YouTube Data API v3 through `youtube_service.dart`. The app can:
-
-- Search videos by module/topic.
-- Fetch video details and statistics.
-- Show 16:9 video cards and 9:16 shorts-style thumbnails.
-- Open embedded or external playback flows.
-- Show fallback content when the API is unavailable.
-
-Important files:
-
-```text
-frontend/lib/services/youtube_service.dart
-frontend/lib/screens/enhanced_youtube_videos_screen.dart
-frontend/lib/screens/youtube_search_screen.dart
-frontend/lib/widgets/youtube_video_card.dart
-frontend/lib/widgets/youtube_shorts_carousel.dart
-frontend/lib/widgets/embedded_video_player.dart
-```
-
-YouTube API setup:
-
-1. Open Google Cloud Console.
-2. Create or select a project.
-3. Enable YouTube Data API v3.
-4. Create an API key.
-5. Add it to `.env` as `YOUTUBE_API_KEY`.
-
-## Chatbot Services
-
-### Groq Chatbot
-
-The Groq service uses Llama 3.1 for educational assistance.
-
-Endpoints:
-
-- `GET /health`
-- `POST /chat`
-- `GET /chat/history/{user_id}`
-- `DELETE /chat/clear/{user_id}`
-- `GET /chat/topics`
-
-Health check:
-
-```bash
-curl http://localhost:5000/health
-```
-
-Test chat:
-
-```bash
-curl -X POST http://localhost:5000/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message":"Explain photosynthesis","user_id":"test"}'
-```
-
-### Python Chatbot
-
-The Python chatbot has two modes:
-
-- `simple_chatbot.py`: lightweight pattern-based chatbot on port `5002`.
-- `chatbot_server.py`: advanced chatbot with OpenAI support on port `5001`.
-
-Simple chatbot endpoints:
-
-- `GET /health`
-- `POST /chat`
-- `GET /history/{user_id}`
-
-Advanced chatbot endpoints:
-
-- `GET /health`
-- `POST /chat`
-- `GET /chat/history/{user_id}`
-- `GET/POST /chat/preferences/{user_id}`
-- `DELETE /chat/clear/{user_id}`
-- `GET /chat/topics`
-
-Test simple chatbot:
-
-```bash
-curl -X POST http://localhost:5002/chat \
-  -H "Content-Type: application/json" \
-  -d '{"message":"Help me understand algebra","user_id":"student123"}'
-```
-
-## Database
-
-ByteBrain uses MongoDB for users, courses, progress, assessments, and activities.
-
-Common collections:
-
-- `users`
-- `courses`
-- `progress`
-- `assessments`
-- `activities`
-
-Check local MongoDB:
-
-```bash
-mongo
-show dbs
-use bytebrain_db
-show collections
-db.activities.count()
-db.activities.find().limit(5).pretty()
-```
-
-## Troubleshooting
-
-### API key not found
-
-- Confirm the relevant `.env` file exists.
-- Check key names such as `GROQ_API_KEY` and `YOUTUBE_API_KEY`.
-- Restart the app or server after changing `.env`.
-
-### Flutter dependencies fail
-
-```bash
-cd frontend
-flutter clean
-flutter pub get
-```
-
-### Backend cannot connect to MongoDB
-
-- Confirm MongoDB is running.
-- Check `MONGODB_URI`.
-- For MongoDB Atlas, verify username, password, database name, and network access.
-
-### Dashboard shows all zeros
-
-- Start the backend with `npm run dev`.
-- Confirm the user is logged in.
-- Confirm `/api/activities/stats` returns data.
-- Check that activities are being recorded with the current user ID.
-
-### Socket exception or real-time chat errors
-
-Install the missing backend dependencies and restart:
-
-```bash
-cd backend
-npm install socket.io firebase-admin
-npm run dev
-```
-
-Then restart Flutter:
-
-```bash
-cd frontend
-flutter pub get
-flutter hot restart
-```
-
-Core app features can still work without Socket.IO, but real-time chat, typing indicators, and study-session notifications require it.
-
-### Chatbot is offline
-
-- Confirm the selected chatbot server is running.
-- Check ports `5000`, `5001`, or `5002`.
-- Confirm Python is installed and available in PATH.
-- Check firewall settings if requests are blocked.
-
-## Testing Checklist
-
-- App launches without errors.
-- Flutter doctor has no critical issues.
-- Backend responds at `http://localhost:3000/health`.
-- MongoDB connection succeeds.
-- User registration and login work.
-- AI content generation works with a valid Groq key.
-- YouTube videos load with a valid YouTube key.
-- Dashboard stats update after quizzes, modules, or assessments.
-- Recent activities show newest items first.
-- Offline dashboard fallback shows cached data.
-- Chatbot health endpoint responds.
-
-## Security Notes
-
-- Never commit `.env` files containing real secrets.
-- Use a strong `JWT_SECRET`.
-- Configure CORS for production domains.
-- Use HTTPS in production.
-- Add rate limiting for public APIs.
-- Store chatbot conversation history in a database for production instead of memory.
-
-## Deployment Notes
-
-Before production:
-
-- Set `NODE_ENV=production`.
-- Configure production MongoDB.
-- Configure production CORS origins.
-- Use HTTPS.
-- Set up logging and monitoring.
-- Configure email service if password reset or verification is enabled.
-- Use a production WSGI server such as gunicorn for Python services.
-- Back up the database.
-
-## Contributing
-
-1. Fork the repository.
-2. Create a feature branch.
-3. Make changes and add focused tests where needed.
-4. Commit your changes.
-5. Push the branch and open a pull request.
-
-## License
-
-This project is licensed under the MIT License.
+If a secret was previously committed, rotate it immediately. Removing a file
+from the latest commit does not remove it from Git history.

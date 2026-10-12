@@ -34,6 +34,8 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen> {
       const EnhancedDashboardScreen(),
       const EnhancedProfileScreen(),
     ];
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
       body: IndexedStack(
@@ -42,10 +44,10 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen> {
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.bottomNavigationBarTheme.backgroundColor ?? theme.cardColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.1),
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.05),
               blurRadius: 10,
               offset: const Offset(0, -2),
             ),
@@ -56,8 +58,8 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen> {
           onTap: _onItemTapped,
           backgroundColor: Colors.transparent,
           elevation: 0,
-          selectedItemColor: Colors.red,
-          unselectedItemColor: Colors.grey,
+          selectedItemColor: AppColors.primary,
+          unselectedItemColor: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
           type: BottomNavigationBarType.fixed,
           items: const [
             BottomNavigationBarItem(
@@ -77,7 +79,7 @@ class _EnhancedHomeScreenState extends State<EnhancedHomeScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _navigateToAIGenerator(),
-        backgroundColor: const Color(0xFF6366F1),
+        backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 8,
         icon: const Icon(Icons.auto_awesome),
@@ -150,8 +152,9 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FA),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
@@ -279,17 +282,18 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
   }
 
   Widget _buildContinueLearningSection() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Continue Learning',
-            style: TextStyle(
-              fontSize: 20,
+            style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
             ),
           ),
           const SizedBox(height: 16),
@@ -300,11 +304,11 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
                 return Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.cardColor,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -322,11 +326,11 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
                 return Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: theme.cardColor,
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
+                        color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -337,23 +341,21 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
                       Icon(
                         Icons.auto_awesome,
                         size: 48,
-                        color: Colors.grey.shade400,
+                        color: isDark ? AppColors.darkTextTertiary : Colors.grey.shade400,
                       ),
                       const SizedBox(height: 12),
                       Text(
                         'No Course in Progress',
-                        style: TextStyle(
-                          fontSize: 16,
+                        style: theme.textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: Colors.grey.shade600,
+                          color: isDark ? AppColors.darkTextSecondary : Colors.grey.shade600,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'Generate a course with AI to start learning',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey.shade500,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: isDark ? AppColors.darkTextTertiary : Colors.grey.shade500,
                         ),
                         textAlign: TextAlign.center,
                       ),
@@ -362,7 +364,6 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
                 );
               }
 
-              // Show course card like in your screenshot
               final title = courseData['title'] as String;
               final progress =
                   (courseData['progress'] as num?)?.toDouble() ?? 60.0;
@@ -370,11 +371,11 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
               return Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -386,7 +387,7 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
                       width: 50,
                       height: 50,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF8B5CF6),
+                        color: AppColors.primaryLight,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -404,37 +405,32 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
                             title.isNotEmpty
                                 ? title
                                 : 'Introduction to Flutter',
-                            style: const TextStyle(
-                              fontSize: 16,
+                            style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          const Text(
+                          Text(
                             'Mobile Development',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
+                              Text(
                                 'Progress',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                                 ),
                               ),
                               Text(
                                 '${progress.round()}%',
-                                style: const TextStyle(
-                                  fontSize: 12,
+                                style: theme.textTheme.bodySmall?.copyWith(
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF6366F1),
+                                  color: AppColors.primary,
                                 ),
                               ),
                             ],
@@ -442,9 +438,9 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
                           const SizedBox(height: 4),
                           LinearProgressIndicator(
                             value: progress / 100,
-                            backgroundColor: Colors.grey.shade200,
+                            backgroundColor: isDark ? AppColors.darkSurfaceVariant : Colors.grey.shade200,
                             valueColor: const AlwaysStoppedAnimation<Color>(
-                                Color(0xFF6366F1)),
+                                AppColors.primary),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           const SizedBox(height: 12),
@@ -453,7 +449,7 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
                             child: ElevatedButton(
                               onPressed: () => _resumeLearning(courseData),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.red,
+                                backgroundColor: AppColors.primary,
                                 foregroundColor: Colors.white,
                                 padding:
                                     const EdgeInsets.symmetric(vertical: 12),
@@ -484,17 +480,16 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
   }
 
   Widget _buildQuickActionsSection() {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Quick Actions',
-            style: TextStyle(
-              fontSize: 20,
+            style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
             ),
           ),
           const SizedBox(height: 16),
@@ -505,7 +500,7 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
                   icon: Icons.school_rounded,
                   title: 'Browse Courses',
                   subtitle: 'Discover learning paths',
-                  color: const Color(0xFF6366F1),
+                  color: AppColors.primary,
                   onTap: () => _navigateToCourses(),
                 ),
               ),
@@ -515,7 +510,7 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
                   icon: Icons.assessment_rounded,
                   title: 'Assessment',
                   subtitle: 'Test your skills',
-                  color: Colors.red,
+                  color: AppColors.assessment,
                   onTap: () => _navigateToSkillAssessment(),
                 ),
               ),
@@ -533,13 +528,16 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
     required Color color,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       height: 120,
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.1),
+        color: color.withOpacity(isDark ? 0.15 : 0.08),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: color.withValues(alpha: 0.2),
+          color: color.withOpacity(isDark ? 0.3 : 0.15),
           width: 1,
         ),
       ),
@@ -569,18 +567,15 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
                 const Spacer(),
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 14,
+                  style: theme.textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -592,17 +587,16 @@ class _EnhancedCoursesPageState extends State<EnhancedCoursesPage>
   }
 
   Widget _buildRecommendedSection() {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Recommended for You',
-            style: TextStyle(
-              fontSize: 20,
+            style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
             ),
           ),
           const SizedBox(height: 16),

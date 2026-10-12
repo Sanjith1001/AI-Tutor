@@ -84,7 +84,7 @@ class GroqChatbotService {
     return {
       'available': isAvailable,
       'url': _baseUrl,
-      'model': 'llama-3.1-8b-instant',
+      'model': 'groq/compound-mini',
       'provider': 'Groq',
       'status': isAvailable ? 'Online' : 'Offline',
     };

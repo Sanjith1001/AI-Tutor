@@ -55,7 +55,7 @@ class AppColors {
 
   // Quick Action Colors
   static const Color browseCourses = Color(0xFF6366F1);
-  static const Color assessment = Color(0xFFEF4444);
+  static const Color assessment = Color(0xFFEAB308);
 
   // Recommended Topic Colors
   static const Color machineLearning = Color(0xFF8B5CF6);

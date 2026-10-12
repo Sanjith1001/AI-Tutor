@@ -68,11 +68,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('Edit Profile'),
-        backgroundColor: AppColors.primary,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.colorScheme.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -91,7 +93,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       backgroundColor: AppColors.primary,
                       child: Text(
                         (widget.user['name'] ?? 'U')[0].toUpperCase(),
-                        style: AppTypography.headlineMedium.copyWith(
+                        style: theme.textTheme.headlineMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
                         ),
@@ -122,8 +124,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               // Name Field
               TextFormField(
                 controller: _nameController,
+                style: theme.textTheme.bodyMedium,
                 decoration:
-                    AuthScreenStyles.inputDecoration('Full Name', Icons.person),
+                    AuthScreenStyles.inputDecoration(context, 'Full Name', Icons.person_outline),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter your name';
@@ -136,8 +139,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               // Email Field
               TextFormField(
                 controller: _emailController,
+                style: theme.textTheme.bodyMedium,
                 decoration:
-                    AuthScreenStyles.inputDecoration('Email', Icons.email),
+                    AuthScreenStyles.inputDecoration(context, 'Email', Icons.email_outlined),
                 keyboardType: TextInputType.emailAddress,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -155,8 +159,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               // Phone Field
               TextFormField(
                 controller: _phoneController,
+                style: theme.textTheme.bodyMedium,
                 decoration: AuthScreenStyles.inputDecoration(
-                    'Phone Number', Icons.phone),
+                    context, 'Phone Number', Icons.phone_android_outlined),
                 keyboardType: TextInputType.phone,
                 validator: (value) {
                   if (value != null && value.isNotEmpty) {

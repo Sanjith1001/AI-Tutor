@@ -109,8 +109,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -131,8 +134,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 Text(
                   'Create Account',
-                  style: TextStyle(
-                    fontSize: 32,
+                  style: theme.textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppColors.primary,
                   ),
@@ -140,11 +142,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 8),
 
-                const Text(
+                Text(
                   'Sign up to get started',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -153,12 +154,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Name Field
                 TextFormField(
                   controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Full Name',
-                    prefixIcon: const Icon(Icons.person),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                  style: theme.textTheme.bodyMedium,
+                  decoration: AuthScreenStyles.inputDecoration(
+                    context,
+                    'Full Name',
+                    Icons.person_outline,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -173,12 +173,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    prefixIcon: const Icon(Icons.email),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+                  style: theme.textTheme.bodyMedium,
+                  decoration: AuthScreenStyles.inputDecoration(
+                    context,
+                    'Email',
+                    Icons.email_outlined,
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -196,21 +195,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _passwordController,
                   obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock),
+                  style: theme.textTheme.bodyMedium,
+                  decoration: AuthScreenStyles.inputDecoration(
+                    context,
+                    'Password',
+                    Icons.lock_outline,
+                  ).copyWith(
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscurePassword
                             ? Icons.visibility
                             : Icons.visibility_off,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                       ),
                       onPressed: () {
                         setState(() => _obscurePassword = !_obscurePassword);
                       },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   validator: (value) {
@@ -229,22 +229,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 TextFormField(
                   controller: _confirmPasswordController,
                   obscureText: _obscureConfirmPassword,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm Password',
-                    prefixIcon: const Icon(Icons.lock_outline),
+                  style: theme.textTheme.bodyMedium,
+                  decoration: AuthScreenStyles.inputDecoration(
+                    context,
+                    'Confirm Password',
+                    Icons.lock_outline,
+                  ).copyWith(
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscureConfirmPassword
                             ? Icons.visibility
                             : Icons.visibility_off,
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                       ),
                       onPressed: () {
                         setState(() =>
                             _obscureConfirmPassword = !_obscureConfirmPassword);
                       },
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                   validator: (value) {
@@ -264,12 +265,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       onChanged: (value) {
                         setState(() => _agreeToTerms = value ?? false);
                       },
+                      fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                        if (states.contains(WidgetState.selected)) {
+                          return AppColors.primary;
+                        }
+                        return Colors.transparent;
+                      }),
                     ),
                     Expanded(
                       child: Text(
                         'I agree to the Terms and Conditions',
-                        style: TextStyle(
-                          color: Colors.grey[700],
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                         ),
                       ),
                     ),
@@ -280,13 +287,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Register Button
                 ElevatedButton(
                   onPressed: _loading ? null : _handleRegister,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+                  style: AuthScreenStyles.primaryButtonStyle,
                   child: _loading
                       ? const SizedBox(
                           height: 20,
@@ -297,14 +298,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                 AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text(
-                          'Register',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
+                      : const Text('Register'),
                 ),
                 const SizedBox(height: 16),
 
@@ -312,7 +306,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Already have an account? '),
+                    Text(
+                      'Already have an account? ',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
+                      ),
+                    ),
                     TextButton(
                       onPressed: () {
                         Navigator.pushReplacement(
@@ -324,7 +323,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       },
                       child: Text(
                         'Login',
-                        style: TextStyle(
+                        style: theme.textTheme.bodyMedium?.copyWith(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,
                         ),

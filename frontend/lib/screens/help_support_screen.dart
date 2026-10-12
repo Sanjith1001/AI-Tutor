@@ -7,8 +7,10 @@ class HelpSupportScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: AppBar(
         title: const Text('Help & Support'),
         backgroundColor: AppColors.primary,
@@ -23,7 +25,7 @@ class HelpSupportScreen extends StatelessWidget {
             Text(
               'We\'re here to help you succeed in your learning journey',
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 24),
@@ -122,10 +124,12 @@ class HelpSupportScreen extends StatelessWidget {
     required String title,
     required List<Widget> children,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: CommonStyles.largePadding,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: CommonStyles.mediumBorderRadius,
         boxShadow: CommonStyles.cardShadow,
       ),
@@ -135,7 +139,7 @@ class HelpSupportScreen extends StatelessWidget {
           Text(
             title,
             style: AppTypography.titleMedium.copyWith(
-              color: AppColors.textPrimary,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -152,6 +156,8 @@ class HelpSupportScreen extends StatelessWidget {
     required IconData icon,
     required VoidCallback onTap,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return InkWell(
       onTap: onTap,
       borderRadius: CommonStyles.smallBorderRadius,
@@ -179,7 +185,7 @@ class HelpSupportScreen extends StatelessWidget {
                   Text(
                     title,
                     style: AppTypography.bodyMedium.copyWith(
-                      color: AppColors.textPrimary,
+                      color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -187,7 +193,7 @@ class HelpSupportScreen extends StatelessWidget {
                   Text(
                     subtitle,
                     style: AppTypography.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -195,7 +201,7 @@ class HelpSupportScreen extends StatelessWidget {
             ),
             Icon(
               Icons.arrow_forward_ios,
-              color: AppColors.textTertiary,
+              color: isDark ? AppColors.darkTextTertiary : AppColors.textTertiary,
               size: 16,
             ),
           ],
@@ -205,6 +211,8 @@ class HelpSupportScreen extends StatelessWidget {
   }
 
   Widget _buildInfoTile(String label, String value) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -213,14 +221,14 @@ class HelpSupportScreen extends StatelessWidget {
           Text(
             label,
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textPrimary,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
               fontWeight: FontWeight.w500,
             ),
           ),
           Text(
             value,
             style: AppTypography.bodyMedium.copyWith(
-              color: AppColors.textSecondary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
             ),
           ),
         ],

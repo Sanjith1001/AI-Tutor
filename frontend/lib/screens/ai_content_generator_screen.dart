@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/groq_service.dart';
 import '../services/course_storage_service.dart';
+import '../themes/index.dart';
 import 'course_screen.dart';
 
 class AIContentGeneratorScreen extends StatefulWidget {
@@ -65,24 +66,23 @@ class _AIContentGeneratorScreenState extends State<AIContentGeneratorScreen> {
     });
 
     try {
-      // Use the enhanced detailed content generation
       final result = await _groqService.generateDetailedContent(
         _promptController.text.trim(),
-        difficulty: 'intermediate', // You can make this configurable
-        audience: 'general learners', // You can make this configurable
+        difficulty: 'intermediate',
+        audience: 'general learners',
       );
 
       if (result['modules'] != null && result['modules'].isNotEmpty) {
         final courseTitle = result['courseTitle'] ?? 'AI Generated Course';
         final modules = List<Map<String, dynamic>>.from(result['modules']);
 
-        // Store the course for "Continue Learning" feature
         await CourseStorageService.storeLastCourse(
           title: courseTitle,
           modules: modules,
         );
 
-        // Navigate to course screen with generated content
+        if (!mounted) return;
+
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -116,11 +116,14 @@ class _AIContentGeneratorScreenState extends State<AIContentGeneratorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('AI Content Generator'),
-        backgroundColor: Colors.blue.shade800,
+        backgroundColor: theme.appBarTheme.backgroundColor ?? theme.colorScheme.primary,
         foregroundColor: Colors.white,
         elevation: 0,
       ),
@@ -129,20 +132,20 @@ class _AIContentGeneratorScreenState extends State<AIContentGeneratorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header Section
+            // Header Section with centralized brand colors
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.blue.shade600, Colors.blue.shade400],
+                gradient: const LinearGradient(
+                  colors: AppColors.primaryGradient,
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.blue.withOpacity(0.3),
+                    color: AppColors.primary.withOpacity(isDark ? 0.2 : 0.3),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -180,12 +183,10 @@ class _AIContentGeneratorScreenState extends State<AIContentGeneratorScreen> {
             const SizedBox(height: 32),
 
             // Prompt Templates Section
-            const Text(
+            Text(
               'Quick Start Templates',
-              style: TextStyle(
-                fontSize: 20,
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
               ),
             ),
             const SizedBox(height: 16),
@@ -201,13 +202,10 @@ class _AIContentGeneratorScreenState extends State<AIContentGeneratorScreen> {
                     width: 200,
                     margin: const EdgeInsets.only(right: 12),
                     child: Card(
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
+                      elevation: 2,
                       child: InkWell(
                         onTap: () => _useTemplate(template['prompt']!),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                         child: Padding(
                           padding: const EdgeInsets.all(16),
                           child: Column(
@@ -215,19 +213,17 @@ class _AIContentGeneratorScreenState extends State<AIContentGeneratorScreen> {
                             children: [
                               Text(
                                 template['title']!,
-                                style: const TextStyle(
-                                  fontSize: 16,
+                                style: theme.textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                               ),
-                              const SizedBox(height: 8),
+                              const Spacer(),
                               Text(
                                 'Tap to use template',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey.shade600,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: isDark ? AppColors.darkTextSecondary : Colors.grey.shade600,
                                 ),
                               ),
                             ],
@@ -243,23 +239,21 @@ class _AIContentGeneratorScreenState extends State<AIContentGeneratorScreen> {
             const SizedBox(height: 32),
 
             // Custom Prompt Section
-            const Text(
+            Text(
               'Custom Prompt',
-              style: TextStyle(
-                fontSize: 20,
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
               ),
             ),
             const SizedBox(height: 16),
 
             Container(
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.cardColor,
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.1),
+                    color: Colors.black.withOpacity(isDark ? 0.2 : 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 2),
                   ),
@@ -268,6 +262,7 @@ class _AIContentGeneratorScreenState extends State<AIContentGeneratorScreen> {
               child: TextField(
                 controller: _promptController,
                 maxLines: 4,
+                style: theme.textTheme.bodyMedium,
                 decoration: InputDecoration(
                   hintText:
                       'Enter your prompt here...\n\nExample: "Create a beginner-friendly course about artificial intelligence with practical examples and hands-on projects"',
@@ -276,10 +271,10 @@ class _AIContentGeneratorScreenState extends State<AIContentGeneratorScreen> {
                     borderSide: BorderSide.none,
                   ),
                   filled: true,
-                  fillColor: Colors.white,
+                  fillColor: theme.cardColor,
                   contentPadding: const EdgeInsets.all(16),
                   hintStyle: TextStyle(
-                    color: Colors.grey.shade500,
+                    color: isDark ? AppColors.darkTextTertiary : Colors.grey.shade500,
                     fontSize: 14,
                   ),
                 ),
@@ -295,18 +290,18 @@ class _AIContentGeneratorScreenState extends State<AIContentGeneratorScreen> {
                 padding: const EdgeInsets.all(16),
                 margin: const EdgeInsets.only(bottom: 16),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade50,
+                  color: Colors.red.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.shade200),
+                  border: Border.all(color: Colors.red.withOpacity(0.3)),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.error_outline, color: Colors.red.shade600),
+                    const Icon(Icons.error_outline, color: Colors.red),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
                         _errorMessage!,
-                        style: TextStyle(color: Colors.red.shade700),
+                        style: const TextStyle(color: Colors.red),
                       ),
                     ),
                   ],
@@ -320,12 +315,12 @@ class _AIContentGeneratorScreenState extends State<AIContentGeneratorScreen> {
               child: ElevatedButton(
                 onPressed: _isLoading ? null : _generateContent,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade600,
+                  backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  elevation: 4,
+                  elevation: 2,
                 ),
                 child: _isLoading
                     ? const Row(
@@ -368,24 +363,24 @@ class _AIContentGeneratorScreenState extends State<AIContentGeneratorScreen> {
               width: double.infinity,
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.blue.shade50,
+                color: AppColors.primary.withOpacity(isDark ? 0.12 : 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.blue.shade200),
+                border: Border.all(color: AppColors.primary.withOpacity(isDark ? 0.25 : 0.15)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.lightbulb_outline,
-                          color: Colors.blue.shade600),
+                      const Icon(Icons.lightbulb_outline,
+                          color: AppColors.primary),
                       const SizedBox(width: 8),
                       Text(
                         'Tips for Better Results',
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.blue.shade800,
+                          color: isDark ? AppColors.darkTextPrimary : AppColors.primaryDark,
                         ),
                       ),
                     ],
@@ -397,8 +392,9 @@ class _AIContentGeneratorScreenState extends State<AIContentGeneratorScreen> {
                     '• Include any specific technologies or tools you want covered\n'
                     '• Specify if you want practical examples or theoretical content',
                     style: TextStyle(
-                      color: Colors.blue.shade700,
+                      color: isDark ? AppColors.darkTextSecondary : AppColors.primary,
                       fontSize: 14,
+                      height: 1.5,
                     ),
                   ),
                 ],

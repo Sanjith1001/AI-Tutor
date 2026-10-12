@@ -17,8 +17,10 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: isDark ? AppColors.darkBackground : AppColors.background,
       appBar: AppBar(
         title: const Text('Privacy Settings'),
         backgroundColor: AppColors.primary,
@@ -33,7 +35,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
             Text(
               'Control your privacy and data preferences',
               style: AppTypography.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
+                color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 24),
@@ -146,10 +148,12 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
     required String subtitle,
     required List<Widget> children,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: CommonStyles.largePadding,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? AppColors.darkSurface : Colors.white,
         borderRadius: CommonStyles.mediumBorderRadius,
         boxShadow: CommonStyles.cardShadow,
       ),
@@ -159,7 +163,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
           Text(
             title,
             style: AppTypography.titleMedium.copyWith(
-              color: AppColors.textPrimary,
+              color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -167,7 +171,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
           Text(
             subtitle,
             style: AppTypography.bodySmall.copyWith(
-              color: AppColors.textSecondary,
+              color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 16),
@@ -183,6 +187,8 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -194,7 +200,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 Text(
                   title,
                   style: AppTypography.bodyMedium.copyWith(
-                    color: AppColors.textPrimary,
+                    color: isDark ? AppColors.darkTextPrimary : AppColors.textPrimary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -202,7 +208,7 @@ class _PrivacySettingsScreenState extends State<PrivacySettingsScreen> {
                 Text(
                   subtitle,
                   style: AppTypography.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                    color: isDark ? AppColors.darkTextSecondary : AppColors.textSecondary,
                   ),
                 ),
               ],
